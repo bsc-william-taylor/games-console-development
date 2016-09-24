@@ -1,25 +1,37 @@
 
 #include <iostream>
 #include <vector>
+#include <string>
 
-#define STB_IMAGE_IMPLEMENTATION
-#define STB_IMAGE_WRITE_IMPLEMENTATION
+#include "ppu_manager.h"
+#include "benchmark.h"
 
-#include "../../stb_image_write.h"
-#include "../../stb_image.h"
+enum App { Success = 1, Error = 0 };
+
+const std::string Name = "Coursework";
+const std::string SpuProgram = "./spu/spu";
+
+typedef std::pair<std::string, int> spu_pair;
+typedef std::vector<spu_pair> spu_programs;
 
 int main(int argc, char * argv[])
 {
-	std::cout << "Image Loading..." << std::endl;
-	
-	int width, height, components;
+	ppu_manager ppu_manager(true);
+	benchmark track(Name);
 
-	unsigned char * data = stbi_load("../picture.bmp", &width, &height, &components, 0);
-	
-	std::cout << "w:" << width << " h: " << height << std::endl;
-	std::cout << "writing new image duplicate.png" << std::endl;
+	const int spe_count = ppu_manager.spe_count();
 
-	stbi_write_png("../duplicate.png", width, height, components, data, 0); 	
-	stbi_image_free(data);
-	return 0;
+	spu_programs programs;
+	programs.push_back(spu_pair(SpuProgram, spe_count));
+	programs.push_back(spu_pair(SpuProgram, spe_count));
+
+	const int processes = programs.size();
+	
+	for(int i = 0; i < processes; ++i)
+	{
+		ppu_manager.spe_program(programs[i].first);
+		ppu_manager.spe_run(programs[i].second);
+	}
+	
+	return Success;
 }
