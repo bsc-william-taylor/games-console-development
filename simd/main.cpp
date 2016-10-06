@@ -1,96 +1,61 @@
 
-#include <iostream>
-#include <altivec.h>
-#include <simdmath.h>
+#include "micro-vector.h"
+#include "benchmark.h"
 
-template<typename T, int L>
-class micro_vector 
+__vector float zero = (__vector float){ 0.0f, 0.0f, 0.0f, 0.0f}; 
+
+const int TESTS = 10000;
+
+int benchmark_simd()
 {
-  T *insert, *start, *end;
-  union store 
-  {  
-    __vector T v;
-    T e[L];
-  } data;
-public:
-  micro_vector(const T * values = 0, int length = -1)
-  {
-     setupPointers();
-     memset(data.e, 0, this->length());
-     add(values, length);
-  }
+  benchmark tracker("SIMD Benchmark");
+  int sum = 0;
 
-  void add(const T * values, int length = -1)
+  for(int i = 0; i < TESTS; i++)
   {
-     if(values == 0)
-     {
-        return;
-     }
+    float numbers[4] = {1, 1, 1, 1};
+    micro_vector<float, 4> vec;
+    floats& f = (floats&)vec.store();
 
-     const int sz = length == -1 ? this->length() : length;
-    
-     for(int i = 0; i < sz; i++)
-     {
-        data.e[i] = values[i];
-     }
-  }
-
-	void add(T value) 
-  {
-    (*insert) = value;
-    ++insert;
-  }
-
-  void print()
-  {
-    for(int i = 0; i < length(); i++)
+    for(int b = 0; b < TESTS; b++)
     {
-      std::cout << data.e[i];
+      f = vec_add(f, f);
     }
+
+    sum += (int)numbers[0];
+    sum -= (int)numbers[1];
   }
 
-	T get(int index) 
+  return sum;
+}
+
+int benchmark_math()
+{
+  benchmark tracker("Math Benchmark"); 
+  int sum = 0;
+   
+  for(int i = 0; i < TESTS; i++)
   {
-		return data.e[index];
-	}
+    float numbers[4] = {1, 1, 1, 1};
+    
+    for(int x = 0; x < TESTS; x++)
+    {
+      for(int b = 0; b < 4; b++)
+      {
+        numbers[b] += numbers[b];
+      }
+    }
 
-	int length() 
-  { 
-     return end - start; 
-  }
+    sum += (int)numbers[0];
+    sum -= (int)numbers[1];
+  } 
 
-  T& store()
-  {
-      return data.e[0];
-  }
-
-private:
-  void setupPointers()
-  {
-    start = &data.e[0];
-    end = &data.e[LEN(data.e)];
-    insert = start;
-  }
-}; 
-
-__vector float zero = (__vector float){ 0.0f, 0.0f, 0.0f, 0.0}; 
-
-typedef __vector float floats;
-typedef __vector int ints;
-typedef __vector char chars;
-typedef __vector bool bools;
-
+  return sum;
+}
 
 int main(int argc, char * argv[])
 {
-  float numbers[4] = {1, 1, 1, 1};
-	micro_vector<float, 4> elements(numbers);
-  
-  floats& e = (floats&)elements.store();
-  e = vec_add(e, e);
-  e = vec_sub(e, e);
-  e = vec_madd(zero, e, e);
-
-  elements.print();	
+  printf("simd result: %d", benchmark_simd());
+  printf("math result: %d", benchmark_math());
 	return 0;
 }
