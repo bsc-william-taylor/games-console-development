@@ -3,8 +3,8 @@
 #include <vector>
 #include <string>
 
-#include "ppu_manager.h"
-#include "benchmark.h"
+#include "../../common/ppu_manager.h"
+#include "../../common/benchmark.h"
 
 enum App { Success = 1, Error = 0 };
 

@@ -3,8 +3,8 @@
 #include <vector>
 #include <string>
 
-#include "ppu_manager.h"
-#include "benchmark.h"
+#include "../../common/ppu_manager.h"
+#include "../../common/benchmark.h"
 
 enum App { Success = 1, Error = 0 };
 
@@ -27,7 +27,6 @@ int main(int argc, char * argv[])
 
 	const int processes = programs.size();
 
-  // Data for the SPU program
 	int data[1000] __attribute__((aligned(16)));
   
   for(int i = 0; i < 1000; i++)
