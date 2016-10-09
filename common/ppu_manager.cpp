@@ -12,7 +12,7 @@ void* ppu_pthread_function(void* arg)
   ppu_pthread_data* data = (ppu_pthread_data*)arg;
 	unsigned int entry = SPE_DEFAULT_ENTRY;
 
-  int err = spe_context_run(data->speid, &entry, 0, data->argp, NULL, NULL);
+  int err = spe_context_run(data->speid, &entry, 0, data->argp, (void*)data->envp, NULL);
 
 	if(err < 0)
 	{
@@ -51,9 +51,10 @@ void ppu_manager::spe_program(const std::string& filename)
 	spu_program = filename;
 }
 
-void ppu_manager::spe_arg(void * address)
+void ppu_manager::spe_arg(void * address, int size)
 {
   spu_arg_address = address;
+  spu_arg_sizeof = size;
 }
 
 void ppu_manager::spe_run(int count)
@@ -86,12 +87,14 @@ void ppu_manager::spe_run(int count)
 			perror("spe_run, spe_context_create, failed");
 			return;
 		}
-	
+
+    data[i].envp = spu_arg_sizeof;	
 		data[i].argp = spu_arg_address;
 		data[i].speid = context;
 		
-
+    int spuID = i;
 		int perr = pthread_create(&data[i].pthread, NULL, &ppu_pthread_function, &data[i]);
+    spe_in_mbox_write(context, (unsigned int*)&spuID, 1, SPE_MBOX_ANY_NONBLOCKING);
 
 		if(perr != 0)
 		{

@@ -13,6 +13,7 @@ struct ppu_pthread_data
 	spe_context_ptr_t speid;
 	pthread_t pthread;
 	void * argp;
+  int envp;
 };
 
 class ppu_manager 
@@ -21,7 +22,7 @@ private:
 	int usable_spes;
 	int physical_spes;
 	int physical_cpu_nodes;
-
+  int spu_arg_sizeof;
   void * spu_arg_address;
 	std::string spu_program;
 public:
@@ -30,7 +31,7 @@ public:
 	
 	int spe_count();
 
-  void spe_arg(void* address);
+  void spe_arg(void* address, int size);
 	void spe_program(const std::string& filename);
 	void spe_run(int count);
 
