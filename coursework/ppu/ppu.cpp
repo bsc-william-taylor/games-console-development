@@ -43,6 +43,7 @@ int main(int argc, char * argv[])
 		ppu_manager.spe_program(programs[i].first);
 	 	ppu_manager.spe_run(programs[i].second);
 	}
-	
+
+  stbi_write_bmp("../assets/grayscale.bmp", task.size.w, task.size.h, 3, task.bytes);	
 	return 0;
 }
