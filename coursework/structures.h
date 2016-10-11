@@ -22,13 +22,16 @@ struct region
   T x, y, w, h;
 };
 
+// size = 64 bytes along 16 alignments
 struct image_task
 {
+  unsigned int components;
   unsigned int sections;
   region<int> work;
   range<int> size;
   void* bytes;
-  char unused[8];
+  unsigned long long output;
+  char unused[16];
 };
 
 #endif

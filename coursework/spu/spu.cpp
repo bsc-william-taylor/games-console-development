@@ -1,56 +1,91 @@
 
 #include "../structures.h"
+#include <spu_intrinsics.h>
 #include <stdio.h>
 #include <spu_mfcio.h>
 #include <math.h>
 #include <algorithm>
+//#include <libmisc.h>
 
-int tagID = 0;
+// Because the libs are not setup corretly, shame on you UWS!
+#define BUFFER_MAX 128 * 128 * 4
 
-void grayscale(unsigned char * pixels, unsigned char * out, int x, int y, int w, int h)
+int tagID = 3;
+
+typedef unsigned char byte;
+
+void grayscale(byte* pixels, byte* out, int length, int rgba)
 {
-  for(int i = x*y; i < w*h; ++i)
+  for(int i = 0; i < length; ++i)
   {
-    double r = (double)pixels[i * 4 + 0];
-    double g = (double)pixels[i * 4 + 1];
-    double b = (double)pixels[i * 4 + 2];
+    double r = (double)pixels[i * rgba + 0];
+    double g = (double)pixels[i * rgba + 1];
+    double b = (double)pixels[i * rgba + 2];
 
     double shade = sqrt((r*r + g*g + b*b) / 3.0);
 
     if(out != NULL) 
     {
-      out[i * 4 + 0] = (unsigned char)std::max(shade, 255.0);
-      out[i * 4 + 1] = (unsigned char)std::max(shade, 255.0);
-      out[i * 4 + 2] = (unsigned char)std::max(shade, 255.0);
+      out[i * rgba + 0] = (byte)std::min(shade, 255.0);
+      out[i * rgba + 1] = (byte)std::min(shade, 255.0);
+      out[i * rgba + 2] = (byte)std::min(shade, 255.0);
     }
-  } 
+  }  
 }
 
 int main(unsigned long long speID, unsigned long long argp, unsigned long long envp)
 {
   if(argp != 0)
   {
-    const unsigned int unique_identifier = spu_read_in_mbox();
+    const unsigned int unique_identifier =  spu_read_in_mbox();
     image_task task __attribute__((aligned(16)));
    
     mfc_get((void*)&task, argp, envp, tagID, 0, 0);
     mfc_write_tag_mask(1<<tagID);
     mfc_read_tag_status_any();
+
+    const unsigned long long totalBytes = task.size.w * task.size.h * task.components;
+    const unsigned long long bufferSize = totalBytes / task.sections; 
+    const unsigned long long bufferStart = bufferSize * unique_identifier;   
+   
+    //printf("%d image-size: %llu \n", unique_identifier, totalBytes);
+    //printf("buffer size: %llu, offset: %llu, total: %llu  \n", bufferSize, bufferStart, totalBytes); 
+    //printf("work region: (x, y) = %d,%d (w, h) = %d,%d bytes: %d \n", x, y, w, h, bufferSize); 
+       
+    unsigned long long writeAt = task.output;//(unsigned long long)(ea + bufferStart);    
+    unsigned long long bytesWritten = 0; 
+    unsigned long long chunkSize = 128*128;
   
-    int sectionHeight = ceil((float)task.size.h / (float)task.sections);
-    int sectionWidth = ceil((float)task.size.w / (float)task.sections);    
+    //unsigned long long diff = writeAt - task.output; 
+    //printf("at: %llu, ea: %llu, diff: %llu \n", writeAt, task.output, diff);
+    while(bytesWritten < bufferSize)
+    {
+      unsigned long long bytesToMove = 0;
 
-    int x = unique_identifier * sectionWidth;
-    int y = unique_identifier * sectionHeight;
-    int w = (int)std::min(x + sectionWidth, task.size.w);
-    int h = (int)std::min(y + sectionHeight, task.size.h);
+      if(bytesWritten + chunkSize > bufferSize)
+      {
+        bytesToMove = 16;
+      }
+      else
+      {
+        bytesToMove = chunkSize;
+      }
 
-    printf("work region: (x, y) = %d,%d (w, h) = %d,%d \n", x, y, w, h); 
-    
-    unsigned char* out = NULL;
-    grayscale((unsigned char *)task.bytes, out, x, y, w, h);
+      byte output[bytesToMove];
+      for(int z = 0; z < bytesToMove; ++z)
+      {
+        output[z] = 255;
+      }     
+      
+      //printf("%d: at %llu, writing: %llu, written: %llu \n", unique_identifier, writeAt, bytesToMove, bytesWritten);  
+      mfc_put(output, writeAt + bufferStart, bytesToMove, tagID, 0, 0);
+      mfc_read_tag_status_all();
+      
+      writeAt += bytesToMove;
+      bytesWritten += bytesToMove;
+    }
 
-    //mfc_put(task.bytes,
+    //printf("total bytes written: %llu \n", bytesWritten);
   }
 
   return 0;
