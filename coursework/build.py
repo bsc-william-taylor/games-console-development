@@ -3,6 +3,7 @@ import platform
 import sys
 import os
 
+working_directory = os.path.dirname(os.path.abspath(sys.argv[0]))
 optimisations = False
 build_spu = False
 build_ppu = False
@@ -10,8 +11,11 @@ build_ppu = False
 os_platform = platform.platform()
 py_version = sys.version
 
+print(working_directory)
 print(os_platform)
 print(py_version)
+
+os.chdir(working_directory)
 
 if len(sys.argv) > 1:
     for arg in sys.argv:
