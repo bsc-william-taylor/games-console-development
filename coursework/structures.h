@@ -29,8 +29,8 @@ struct image_task
   unsigned int sections;
   region<int> work;
   range<int> size;
-  void* bytes;
   unsigned long long output;
+  unsigned long long input;
   char unused[16];
 };
 
