@@ -2,6 +2,7 @@
 #ifndef __STRUCTS_H_
 #define __STRUCTS_H_
 
+// size: 8 bytes
 template<typename T>
 struct point
 {
@@ -9,6 +10,7 @@ struct point
   T y;
 };
 
+// size: 8 bytes
 template<typename T>
 struct range
 {
@@ -16,21 +18,22 @@ struct range
   T h;  
 };
 
+// size: 16 bytes
 template<typename T>
 struct region
 {
   T x, y, w, h;
 };
 
-// size = 64 bytes along 16 alignments
+// size: 64 bytes
 struct image_task
 {
+  unsigned long long output;
+  unsigned long long input;
   unsigned int components;
   unsigned int sections;
   region<int> work;
   range<int> size;
-  unsigned long long output;
-  unsigned long long input;
   char unused[16];
 };
 

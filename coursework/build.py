@@ -1,13 +1,39 @@
 #!/usr/bin/python
+import platform
 import sys
 import os
 
-# Double check python version
-print('python version: ' + sys.version)
-# Output so we know the script is running
-print('building PPU exe...')
-os.system('ppu-g++ -o ppu/ppu ../common/*.cpp ppu/*.cpp -lspe2')
-print('finished')
-print('building spu exe...')
-os.system('spu-g++ -o spu/spu spu/*.cpp -lm')
-print('finished')
+optimisations = False
+build_spu = False
+build_ppu = False
+
+os_platform = platform.platform()
+py_version = sys.version
+
+print(os_platform)
+print(py_version)
+
+if len(sys.argv) > 1:
+    for arg in sys.argv:
+        if arg == "-spu":
+            build_spu = True
+        if arg == "-ppu":
+            build_ppu = True   
+        if arg == "-r":
+            optimisations = True 
+
+if build_ppu:
+    print('building ppu source')
+    if "Window" not in os_platform:
+        cmd = 'ppu-g++ -o ppu/ppu ../common/*.cpp ppu/*.cpp -lspe2 '
+        if optimisations == True:
+            cmd += '-O2'
+        os.system(cmd)
+
+if build_spu:
+    print('building spu source')
+    if "Window" not in os_platform:
+        cmd = 'spu-g++ -o spu/spu spu/*.cpp '
+        if optimisations == True:
+            cmd += '-O2'
+        os.system(cmd)
