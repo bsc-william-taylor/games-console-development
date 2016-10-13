@@ -2,6 +2,12 @@
 #include <iostream>
 #include "../common/micro-vector.h"
 
+struct vectors 
+{
+  micro_vector<float, 4> floats;
+  micro_vector<int, 4> ints;
+}
+
 int main(int argc, char * argv[])
 {
   float numbers[4] = {1, 1, 1, 1};

@@ -34,6 +34,8 @@ void read_image(image_task& task, std::string fn)
   task.size.h = fixedHeight;
   task.size.w = fixedWidth;
   task.output = 0;
+
+  stbi_image_free(bitmap);
 }
 
 int main(int argc, char * argv[])
