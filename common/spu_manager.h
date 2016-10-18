@@ -8,7 +8,7 @@
 #include <string>
 #include <vector>
 
-struct ppu_pthread_data
+struct spu_pthread_data
 {
 	spe_context_ptr_t speid;
 	pthread_t pthread;
@@ -16,7 +16,7 @@ struct ppu_pthread_data
   int envp;
 };
 
-class ppu_manager 
+class spu_manager 
 {
 private:
 	int usable_spes;
@@ -26,8 +26,8 @@ private:
   void * spu_arg_address;
 	std::string spu_program;
 public:
-	ppu_manager(bool debug = false);
-	~ppu_manager();
+	spu_manager(bool debug = false);
+	~spu_manager();
 	
 	int spe_count();
 

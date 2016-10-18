@@ -3,66 +3,63 @@
 #include <vector>
 #include <string>
 
-#define STB_IMAGE_RESIZE_IMPLEMENTATION
-#define STB_IMAGE_WRITE_IMPLEMENTATION
-#define STB_IMAGE_IMPLEMENTATION
-
-#include "../../common/stb_image_resize.h"
-#include "../../common/stb_image_write.h"
-#include "../../common/stb_image.h"
-#include "../../common/ppu_manager.h"
+#include "../../common/spu_manager.h"
 #include "../../common/benchmark.h"
+#include "../../common/image.h"
+#include "../../common/log.h"
 #include "../structures.h"
 
-const std::string outputImage = "../assets/greyscale.bmp";
-const std::string inputImage = "../assets/picture.bmp";
-const std::string spuExe = "./spu/spu";
-const std::string name = "coursework";
-
-void read_image(image_task& task, std::string fn)
+void write_output(std::string filename, unsigned char* data, int w, int h)
 {
-  const int fixedHeight = 600;
-  const int fixedWidth = 600;
+  basic_image output;
+  output.filename = filename;
+  output.height = h;
+  output.width = w;
+  output.data = data;
+  write_image(output);
+}
 
-  int w, h, n;
-  unsigned char* bitmap = stbi_load(fn.c_str(), &w, &h, &n, 0);
-  unsigned char* raw = (unsigned char *)malloc(fixedHeight * fixedWidth * n);
-  assert(stbir_resize_uint8(bitmap, w, h, 0, raw, fixedWidth, fixedHeight, 0, n) == 1);
+void process_image(spu_manager& spu_manager, basic_image& image, int index)
+{
+  unsigned char output[image.width * image.height * 3];
+
+  image_task task __attribute__((aligned(16)));
+  task.output = (unsigned long long)output;
+  task.input = (unsigned long long)image.data;
+  task.components = 3;
+  task.sections = 6;
+  task.size.h = image.height;
+  task.size.w = image.width;
+
+  LOG("%s %s", "Running -> ", "./spu/spu");
   
-  task.components = n;
-  task.input = (unsigned long long)raw;
-  task.size.h = fixedHeight;
-  task.size.w = fixedWidth;
-  task.output = 0;
+  spu_manager.spe_arg((void*)&task, sizeof(image_task));
+	spu_manager.spe_program("./spu/spu");
+	spu_manager.spe_run(6);
 
-  stbi_image_free(bitmap);
+  LOG("%s %s", "Writing output -> ", filename("./O", index+1, ".bmp").c_str());
+
+  write_output(filename("./O", index+1, ".bmp"), output, image.width, image.height);
 }
 
 int main(int argc, char * argv[])
 {
-	ppu_manager ppu_manager(true);
-	benchmark track(name);
+	spu_manager spu_manager(true);
+	benchmark track("coursework");
 
-	const int spe_count = ppu_manager.spe_count();
-	std::vector<std::pair<std::string, int> > programs;
-	programs.push_back(std::pair<std::string, int>(spuExe, spe_count));
-
-  const int processes = programs.size(); 
-  image_task task __attribute__((aligned(16)));
-  read_image(task, inputImage); 
+  std::vector<std::string> filenames;
+  std::vector<basic_image> images;
   
-  unsigned char buffer[task.size.w*task.size.h*task.components];
-  task.sections = spe_count;
-  task.output = (unsigned long long)buffer;
+  for(int i = 0; i < 10; i++)
+    filenames.push_back(filename("../assets/", i+1, ".bmp"));
 
-  for(int i = 0; i < processes; ++i)
-	{ 
-    ppu_manager.spe_arg((void*)&task, sizeof(image_task));
-		ppu_manager.spe_program(programs[i].first);
-	 	ppu_manager.spe_run(programs[i].second);
-  }
+  load_images(filenames, images);
+  const int imagesCount = images.size();
+  LOG("%s %d %s", "Loaded", imagesCount, "images");
 
-  int w = task.size.w, h = task.size.h, n = task.components;
-  stbi_write_bmp(outputImage.c_str(), w, h, n, (void*)task.output);	
+  for(int i = 0; i < imagesCount; i++) 
+    process_image(spu_manager, images[i], i);
+
+  unload_images(images);
   return 0;
 }
