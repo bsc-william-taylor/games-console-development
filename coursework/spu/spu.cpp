@@ -13,32 +13,34 @@ const long long chunkSize = 9600;
 const int kernelSize = 3;
 const int tagID = 3;
 
+// INCREASE KERNAL SIZE???
 const double sobel_filter_x[kernelSize][kernelSize] = 
 {
-  { -0.25, 0, 0.25 },
-  { -0.5, 0, 0.5 },
-  { -0.25, 0, 0.25 }
+  { -1, 0, 1 },
+  { -2, 0, 2 },
+  { -1, 0, 1 }
 };
 
 
 const double sobel_filter_y[kernelSize][kernelSize] = 
 {
-  {  -0.25, -0.5,  -0.25 },
+  {  -1, -2,  -1 },
   {  0,  0,  0 },
-  {  0.25,  0.5,  0.25 }
+  {  1, 2,  1 }
 };
 
 double px(byte* pixels, int x, int y, int w, int h)
 {
+  /*
   if(x < 0 || y < 0)
-    return px(pixels, std::max(0, x), std::max(0, y), w, h);
-  if(x >= w || y >= h)
-    return px(pixels, std::min(x, w-1), std::min(y, h-1), w, h);
+    return 0;
+  if(x > w || y > h)
+    return 0;*/
 
-  int index = x + (w * y);
-  int r =  (int)pixels[(index*3)+0];
-  int g =  (int)pixels[(index*3)+1];
-  int b =  (int)pixels[(index*3)+2];
+  int index = (x + w * y) * 3;
+  int r =  (int)pixels[index+0];
+  int g =  (int)pixels[index+1];
+  int b =  (int)pixels[index+2];
   return ((double)(r + g + b) / 3.0);
 }
 
@@ -63,10 +65,10 @@ int sobel_op(byte* pixels, int x, int y, int w, int h)
     }
   }
 
-  return ceil(sqrt((x_weight * x_weight) + (y_weight * y_weight)));
+  return px(pixels, x, y, w, h);//ceil(sqrt((x_weight * x_weight) + (y_weight * y_weight)));
 }
 
-void sobel_filter(byte* out, byte* pixels, int length, image_task& task)
+void sobel_filter(byte* out, byte* pixels, int length, image_task& task, int&, int&)
 {
   const int rgba = task.components;
   const int w = task.size.w;
@@ -74,7 +76,7 @@ void sobel_filter(byte* out, byte* pixels, int length, image_task& task)
 
   int x = 0, y = 0;
 
-  for(int i = 0; i < length; i+=rgba, ++x)
+  for(int i = 0; i < length; i+=rgba, x++)
   {
     if(x >= w)
     {
@@ -84,15 +86,6 @@ void sobel_filter(byte* out, byte* pixels, int length, image_task& task)
 
     int value = sobel_op(pixels, x, y, w, h);
     int clamped = std::max(0, std::min(value, 255));
-
-    if(clamped < 120)
-    {
-      clamped = 0;
-    }
-    else
-    {
-      clamped = 255;
-    }
 
     out[i + 0] = (byte)clamped;
     out[i + 1] = (byte)clamped;
@@ -118,6 +111,8 @@ int main(unsigned long long speID, unsigned long long argp, unsigned long long e
     long long readAt = task.input;
     long long bytesWritten = 0; 
   
+    int x = 0, y = 0;
+
     while(bytesWritten < bufferSize)
     {
       byte output[chunkSize];
@@ -126,7 +121,7 @@ int main(unsigned long long speID, unsigned long long argp, unsigned long long e
       mfc_get(input, readAt + bufferStart, chunkSize, tagID, 0, 0);
       mfc_read_tag_status_any();
 
-      sobel_filter(output, input, chunkSize, task);
+      sobel_filter(output, input, chunkSize, task, x, y);
       
       mfc_put(output, writeAt + bufferStart, chunkSize, tagID, 0, 0);
       mfc_read_tag_status_all();
@@ -134,6 +129,7 @@ int main(unsigned long long speID, unsigned long long argp, unsigned long long e
       bytesWritten += chunkSize;
       writeAt += chunkSize;
       readAt += chunkSize;
+      break;
     }
   }
 

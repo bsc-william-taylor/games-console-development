@@ -27,7 +27,7 @@ void process_image(spu_manager& spu_manager, basic_image& image, int index)
   task.output = (unsigned long long)output;
   task.input = (unsigned long long)image.data;
   task.components = 3;
-  task.sections = 6;
+  task.sections = 1;
   task.size.h = image.height;
   task.size.w = image.width;
 
@@ -35,7 +35,7 @@ void process_image(spu_manager& spu_manager, basic_image& image, int index)
   
   spu_manager.spe_arg((void*)&task, sizeof(image_task));
 	spu_manager.spe_program("./spu/spu");
-	spu_manager.spe_run(6);
+	spu_manager.spe_run(1);
 
   LOG("%s %s", "Writing output -> ", filename("./O", index+1, ".bmp").c_str());
 
@@ -50,7 +50,7 @@ int main(int argc, char * argv[])
   std::vector<std::string> filenames;
   std::vector<basic_image> images;
   
-  for(int i = 0; i < 10; i++)
+  for(int i = 0; i < 1; i++)
     filenames.push_back(filename("../assets/", i+1, ".bmp"));
 
   load_images(filenames, images);
