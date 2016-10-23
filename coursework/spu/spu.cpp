@@ -31,11 +31,10 @@ const double sobel_filter_y[kernelSize][kernelSize] =
 
 double px(byte* pixels, int x, int y, int w, int h)
 {
-  /*
   if(x < 0 || y < 0)
     return 0;
-  if(x > w || y > h)
-    return 0;*/
+  if(x >= 640 || y >= 480)
+    return 0;
 
   int index = (x + w * y) * 3;
   int r =  (int)pixels[index+0];
@@ -113,14 +112,24 @@ int main(unsigned long long speID, unsigned long long argp, unsigned long long e
   
     int x = 0, y = 0;
 
+    byte output[totalBytes];
+    byte input[totalBytes];
+
     while(bytesWritten < bufferSize)
     {
-      byte output[chunkSize];
-      byte input[chunkSize];
-
-      mfc_get(input, readAt + bufferStart, chunkSize, tagID, 0, 0);
+      long long address = (long long)input;
+      mfc_get((volatile void*)(address + bytesWritten), readAt + bufferStart, chunkSize, tagID, 0, 0);
       mfc_read_tag_status_any();
+      
+      bytesWritten += chunkSize;
+      writeAt += chunkSize;
+      readAt += chunkSize;
+      //break;
+    }
 
+    /*
+    while(bytesWritten < bufferSize)
+    {
       sobel_filter(output, input, chunkSize, task, x, y);
       
       mfc_put(output, writeAt + bufferStart, chunkSize, tagID, 0, 0);
@@ -129,8 +138,7 @@ int main(unsigned long long speID, unsigned long long argp, unsigned long long e
       bytesWritten += chunkSize;
       writeAt += chunkSize;
       readAt += chunkSize;
-      break;
-    }
+    }*/    
   }
 
   return 0;

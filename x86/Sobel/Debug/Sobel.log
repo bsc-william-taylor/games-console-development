@@ -1,0 +1,31 @@
+﻿  main.cpp
+c:\users\b0023\desktop\projects\sobel\sobel\main.cpp(71): warning C4244: '+=': conversion from 'double' to 'int', possible loss of data
+c:\users\b0023\desktop\projects\sobel\sobel\main.cpp(72): warning C4244: '+=': conversion from 'double' to 'int', possible loss of data
+c:\users\b0023\desktop\projects\sobel\sobel\main.cpp(76): warning C4244: 'return': conversion from 'double' to 'int', possible loss of data
+c:\users\b0023\desktop\projects\sobel\sobel\main.cpp(91): warning C4018: '<': signed/unsigned mismatch
+c:\users\b0023\desktop\projects\sobel\sobel\main.cpp(93): warning C4018: '<': signed/unsigned mismatch
+c:\users\b0023\desktop\projects\sobel\sobel\main.cpp(109): warning C4244: '*=': conversion from 'double' to 'int', possible loss of data
+c:\users\b0023\desktop\projects\sobel\sobel\main.cpp(212): warning C4018: '<': signed/unsigned mismatch
+c:\users\b0023\desktop\projects\sobel\sobel\main.cpp(222): warning C4244: '=': conversion from 'double' to 'BYTE', possible loss of data
+c:\users\b0023\desktop\projects\sobel\sobel\main.cpp(223): warning C4244: '=': conversion from 'double' to 'BYTE', possible loss of data
+c:\users\b0023\desktop\projects\sobel\sobel\main.cpp(224): warning C4244: '=': conversion from 'double' to 'BYTE', possible loss of data
+c:\users\b0023\desktop\projects\sobel\sobel\main.cpp(274): warning C4244: '=': conversion from 'double' to 'int', possible loss of data
+c:\users\b0023\desktop\projects\sobel\sobel\main.cpp(276): warning C4244: '=': conversion from 'double' to 'int', possible loss of data
+c:\users\b0023\desktop\projects\sobel\sobel\main.cpp(166): warning C4018: '<': signed/unsigned mismatch
+  c:\users\b0023\desktop\projects\sobel\sobel\main.cpp(300): note: see reference to function template instantiation 'void gaussian_blur<12>(FIBITMAP *,FIBITMAP *)' being compiled
+c:\users\b0023\desktop\projects\sobel\sobel\main.cpp(174): warning C4244: '=': conversion from 'double' to 'unsigned char', possible loss of data
+c:\users\b0023\desktop\projects\sobel\sobel\main.cpp(175): warning C4244: '=': conversion from 'double' to 'unsigned char', possible loss of data
+c:\users\b0023\desktop\projects\sobel\sobel\main.cpp(176): warning C4244: '=': conversion from 'double' to 'unsigned char', possible loss of data
+c:\users\b0023\desktop\projects\sobel\sobel\main.cpp(187): warning C4018: '<': signed/unsigned mismatch
+c:\users\b0023\desktop\projects\sobel\sobel\main.cpp(195): warning C4244: '=': conversion from 'double' to 'BYTE', possible loss of data
+c:\users\b0023\desktop\projects\sobel\sobel\main.cpp(196): warning C4244: '=': conversion from 'double' to 'BYTE', possible loss of data
+c:\users\b0023\desktop\projects\sobel\sobel\main.cpp(197): warning C4244: '=': conversion from 'double' to 'BYTE', possible loss of data
+c:\users\b0023\desktop\projects\sobel\sobel\main.cpp(131): warning C4018: '<': signed/unsigned mismatch
+  c:\users\b0023\desktop\projects\sobel\sobel\main.cpp(154): note: see reference to function template instantiation 'std::vector<double,std::allocator<_Ty>> gaussian_kernel<double,12>(void)' being compiled
+          with
+          [
+              _Ty=double
+          ]
+  c:\users\b0023\desktop\projects\sobel\sobel\main.cpp(300): note: see reference to function template instantiation 'void gaussian_blur<12>(FIBITMAP *,FIBITMAP *)' being compiled
+c:\users\b0023\desktop\projects\sobel\sobel\main.cpp(140): warning C4018: '<': signed/unsigned mismatch
+  Sobel.vcxproj -> C:\Users\B0023\Desktop\Projects\Sobel\Debug\Sobel.exe
