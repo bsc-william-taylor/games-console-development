@@ -12,6 +12,7 @@
 
 typedef unsigned char byte;
 
+/*
 const double sobel_filter_x[5][5] =
 {
     { 2, 1, 0, -1, -2 },
@@ -24,11 +25,26 @@ const double sobel_filter_x[5][5] =
 const double sobel_filter_y[5][5] =
 {
     {  2,  4,  4,  4,  2 },
-    {  1,  2,  3,  2,  1 },
+    {  1,  3,  4,  3,  1 },
     {  0,  0,  0,  0,  0 },
-    { -1, -2, -3, -2, -1 },
+    { -1, -3, -4, -3, -1 },
     { -2, -4, -4, -4, -2 }
+};*/
+
+const double sobel_filter_x[3][3] =
+{
+    {  1,  2,  1 },
+    {  0,  0,  0 },
+    { -1, -2, -1 }
 };
+
+const double sobel_filter_y[3][3] =
+{
+    { 1,  0,  -1 },
+    { 2,  0,  -2 },
+    { 1,  0,  -1 } 
+};
+
 
 template<typename T>
 T clamp(T min, T max, T v)
@@ -50,30 +66,38 @@ double px(byte* pixels, int x, int y, int w, int h)
     return ((double)(r + g + b) / 3.0);
 }
 
+/*
+
+
+{ px(pixels, x - 2, y - 2, w, h), px(pixels, x - 1, y - 2, w, h),  px(pixels, x, y - 2, w, h), px(pixels, x+1, y - 2, w, h),  px(pixels, x + 2, y - 2, w, h) },
+{ px(pixels, x - 2, y - 1, w, h), px(pixels, x - 1, y - 1, w, h),  px(pixels, x, y - 1, w, h), px(pixels, x+1, y - 1, w, h),  px(pixels, x + 2, y - 1, w, h) },
+{ px(pixels, x - 2, y    , w, h), px(pixels, x - 1, y    , w, h),  px(pixels, x, y, w, h),     px(pixels, x+1, y    , w, h),  px(pixels, x + 2, y    , w, h) },
+{ px(pixels, x - 2, y + 1, w, h), px(pixels, x - 1, y + 1, w, h),  px(pixels, x, y + 1, w, h), px(pixels, x+1, y + 1, w, h),  px(pixels, x + 2, y + 1, w, h) },
+{ px(pixels, x - 2, y + 2, w, h), px(pixels, x - 1, y + 2, w, h),  px(pixels, x, y + 2, w, h), px(pixels, x+1, y + 2, w, h),  px(pixels, x + 2, y + 2, w, h) }
+*/
+
 int sobel_op(byte* pixels, int x, int y, int w, int h)
 {
     int x_weight = 0;
     int y_weight = 0;
 
-    double window[5][5] =
+    double window[3][3] =
     {
-        { px(pixels, x - 2, y - 2, w, h), px(pixels, x - 1, y - 2, w, h),  px(pixels, x, y - 2, w, h), px(pixels, x+1, y - 2, w, h),  px(pixels, x + 2, y - 2, w, h) },
-        { px(pixels, x - 2, y - 1, w, h), px(pixels, x - 1, y - 1, w, h),  px(pixels, x, y - 1, w, h), px(pixels, x+1, y - 1, w, h),  px(pixels, x + 2, y - 1, w, h) },
-        { px(pixels, x - 2, y    , w, h), px(pixels, x - 1, y    , w, h),  px(pixels, x, y, w, h),     px(pixels, x+1, y    , w, h),  px(pixels, x + 2, y    , w, h) },
-        { px(pixels, x - 2, y + 1, w, h), px(pixels, x - 1, y + 1, w, h),  px(pixels, x, y + 1, w, h), px(pixels, x+1, y + 1, w, h),  px(pixels, x + 2, y + 1, w, h) },
-        { px(pixels, x - 2, y + 2, w, h), px(pixels, x - 1, y + 2, w, h),  px(pixels, x, y + 2, w, h), px(pixels, x+1, y + 2, w, h),  px(pixels, x + 2, y + 2, w, h) }
+        { px(pixels, x - 1, y - 1, w, h), px(pixels, x, y - 1, w, h),  px(pixels, x + 1, y - 1, w, h) },
+        { px(pixels, x - 1, y    , w, h), px(pixels, x, y   , w, h),   px(pixels, x + 1, y    , w, h) },
+        { px(pixels, x - 1, y + 1, w, h), px(pixels, x, y + 1, w, h),  px(pixels, x + 1, y + 1, w, h) }
     };
 
-    for (int i = 0; i < 5; i++)
+    for (int i = 0; i < 3; i++)
     {
-        for (int j = 0; j < 5; j++)
+        for (int j = 0; j < 3; j++)
         {
             x_weight += window[i][j] * sobel_filter_x[i][j];
             y_weight += window[i][j] * sobel_filter_y[i][j];
         }
     }
 
-    return ceil(sqrt(x_weight * x_weight + y_weight * y_weight)) / 1.25;
+    return ceil(sqrt(x_weight * x_weight + y_weight * y_weight));
 }
 
 int minSobel = 255, maxSobel = 0;
@@ -96,22 +120,22 @@ void sobel_filter(FIBITMAP * image)
             y++;
         }
 
-        auto value = sobel_op(input, x, y, w, h);
+        auto value = sobel_op(input, x, y, w, h) * 3;
 
         if(value < minSobel)
             minSobel = value;
         if(value > maxSobel)
             maxSobel = value;
 
-        if (value <= 50)
+        if (value <= 35)
             value = 0;
-        else //if (value > 200)
+        else if (value >= 80)
             value *= 2.0;
 
         auto clamped = clamp(0, 255, value);
         output[i + 0] = clamped == 0 ? 0 : 0;
         output[i + 1] = clamped == 0 ? 0 : 0;
-        output[i + 2] = clamped;// == 0 ? 0 : 255;
+        output[i + 2] = clamped == 0 ? 0 : 255;
     }
 
     FreeImage_Unload(clone);
@@ -239,57 +263,62 @@ double edge_density(unsigned char * bytes, int x, int y, int w, int h)
         }
     }
     
-    const auto maxDensity = 10.0*10.0*255.0;
+    const auto maxDensity = (w-x)*(h-y)*255.0;
     return totalDensity / maxDensity;
 }
 
-void fill(unsigned char * bytes, int x, int y, int w, int h)
+void fill(unsigned char * bytes, int x, int y, int w, int h, int r, int g, int b)
 {
     for (auto py = y; py < h; py++)
     {
         for (auto px = x; px < w; px++)
         {
             auto index = px * 3 + 640 * py * 3;
-            bytes[index + 0] = 0;
-            bytes[index + 1] = 0;
-            bytes[index + 2] = 255;
+            bytes[index + 0] = b;
+            bytes[index + 1] = g;
+            bytes[index + 2] = r;
         }
     }
 }
 
-void detect_windows(FIBITMAP * image)
+void detect_windows(FIBITMAP * image, int width, int height)
 {
+    auto clone = FreeImage_Clone(image);
+    auto cloneBytes = FreeImage_GetBits(clone);
     auto bytes = FreeImage_GetBits(image);
-    auto height = 25;
-    auto width = 25;
     auto x = 0, y = 0;
 
     auto minDensity = 5, maxDensity = 0;
 
     while(y < 480 && x < 640)
     {
-        auto edgeDensity = edge_density(bytes, x, y, std::min(x+width, 640), std::min(y + height, 480));
+        auto edgeDensity = edge_density(cloneBytes, x, y, std::min(x+width, 640), std::min(y + height, 480));
     
         if(edgeDensity < minDensity)
             minDensity = edgeDensity;
         if(edgeDensity > maxDensity)
             maxDensity = edgeDensity;
 
-        if(edgeDensity >= 0.025)
+        if(edgeDensity > 0.4)
         {
-            fill(bytes, x, y, std::min(x + width, 640), std::min(y + height, 480));
+            fill(bytes, x, y, std::min(x + width, 640), std::min(y + height, 480), 255, 0, 0);
+        }
+        else
+        {
+            //fill(bytes, x, y, std::min(x + width, 640), std::min(y + height, 480), 0, 0, 0);
         }
 
-        x += width;
+        x++;// += width;
 
         if(x >= 640)
         {
-            y += height;
+            y++;// += height;
             x = 0;
         }
     }
 
     std::cout << "max density: " << maxDensity << " min density: " << minDensity << std::endl;
+    FreeImage_Unload(clone);
 }
 
 void process_image(std::string in, std::string out)
@@ -297,9 +326,9 @@ void process_image(std::string in, std::string out)
     auto bitmap = FreeImage_Load(FIF_BMP, in.c_str());
     auto mask = FreeImage_Clone(bitmap);
 
-    gaussian_blur<15>(bitmap, mask);
+    gaussian_blur<10>(bitmap, mask);
     sobel_filter(mask);
-    detect_windows(mask);
+    detect_windows(mask, 40, 40);
     overlay_squares(bitmap, mask);
 
     FreeImage_Save(FIF_BMP, mask, out.c_str());
