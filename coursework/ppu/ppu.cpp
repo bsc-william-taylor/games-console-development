@@ -27,15 +27,15 @@ void process_image(spu_manager& spu_manager, basic_image& image, int index)
   task.output = (unsigned long long)output;
   task.input = (unsigned long long)image.data;
   task.components = 3;
-  task.sections = 1;
+  task.sections = 1;//spu_manager.spe_count();
   task.size.h = image.height;
   task.size.w = image.width;
 
-  LOG("%s %s", "Running -> ", "./spu/spu");
+  LOG("%s %s", "Running -> ", "./blur/blur");
   
   spu_manager.spe_arg((void*)&task, sizeof(image_task));
-	spu_manager.spe_program("./spu/spu");
-	spu_manager.spe_run(1);
+	spu_manager.spe_program("./blur/blur");
+	spu_manager.spe_run(task.sections);
 
   LOG("%s %s", "Writing output -> ", filename("./O", index+1, ".bmp").c_str());
 
@@ -57,8 +57,11 @@ int main(int argc, char * argv[])
   const int imagesCount = images.size();
   LOG("%s %d %s", "Loaded", imagesCount, "images");
 
-  for(int i = 0; i < imagesCount; i++) 
+  for(int i = 0; i < imagesCount; i++)
+  { 
     process_image(spu_manager, images[i], i);
+    break;
+  }
 
   unload_images(images);
   return 0;

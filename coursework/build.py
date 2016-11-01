@@ -17,6 +17,12 @@ print(py_version)
 
 os.chdir(working_directory)
 
+def build(output, input):
+    cmd = 'spu-g++ -o ' + output + ' ' + input
+    if optimisations == True:
+        cmd += '-O2'
+    os.system(cmd)
+
 if len(sys.argv) > 1:
     for arg in sys.argv:
         if arg == "-spu":
@@ -37,7 +43,5 @@ if build_ppu:
 if build_spu:
     print('building spu source')
     if "Window" not in os_platform:
-        cmd = 'spu-g++ -o spu/spu spu/*.cpp '
-        if optimisations == True:
-            cmd += '-O2'
-        os.system(cmd)
+        build('blur/blur', 'blur/*.cpp')
+        

@@ -2,6 +2,8 @@
 #ifndef __STRUCTS_H_
 #define __STRUCTS_H_
 
+#include <math.h>
+
 // size: 8 bytes
 template<typename T>
 struct point
@@ -36,6 +38,15 @@ struct image_task
   range<int> size;
   char unused[16];
 };
+
+typedef unsigned char byte;
+
+template<typename T>
+T clamp(T min, T max, T v)
+{
+    return std::max(min, std::min(v, max));
+}
+
 
 #endif
 

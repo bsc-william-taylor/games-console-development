@@ -87,7 +87,7 @@ void sobel_filter(FIBITMAP * image)
 
         auto value = sobel_op(input, x, y, w, h);
 
-        if (value <= 50)
+        if (value <= 10)
             value = 0;
         else
             value *= 3.0;

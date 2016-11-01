@@ -13,14 +13,12 @@ const long long chunkSize = 9600;
 const int kernelSize = 3;
 const int tagID = 3;
 
-// INCREASE KERNAL SIZE???
 const double sobel_filter_x[kernelSize][kernelSize] = 
 {
   { -1, 0, 1 },
   { -2, 0, 2 },
   { -1, 0, 1 }
 };
-
 
 const double sobel_filter_y[kernelSize][kernelSize] = 
 {
@@ -64,10 +62,10 @@ int sobel_op(byte* pixels, int x, int y, int w, int h)
     }
   }
 
-  return px(pixels, x, y, w, h);//ceil(sqrt((x_weight * x_weight) + (y_weight * y_weight)));
+  return ceil(sqrt((x_weight * x_weight) + (y_weight * y_weight)));
 }
 
-void sobel_filter(byte* out, byte* pixels, int length, image_task& task, int&, int&)
+void sobel_filter(byte* out, byte* pixels, int length, image_task& task)
 {
   const int rgba = task.components;
   const int w = task.size.w;
@@ -117,20 +115,13 @@ int main(unsigned long long speID, unsigned long long argp, unsigned long long e
 
     while(bytesWritten < bufferSize)
     {
-      long long address = (long long)input;
-      mfc_get((volatile void*)(address + bytesWritten), readAt + bufferStart, chunkSize, tagID, 0, 0);
-      mfc_read_tag_status_any();
-      
-      bytesWritten += chunkSize;
-      writeAt += chunkSize;
-      readAt += chunkSize;
-      //break;
-    }
+      byte output[chunkSize];
+      byte input[chunkSize];
 
-    /*
-    while(bytesWritten < bufferSize)
-    {
-      sobel_filter(output, input, chunkSize, task, x, y);
+      mfc_get(input, readAt + bufferStart, chunkSize, tagID, 0, 0);
+      mfc_read_tag_status_any();
+
+      sobel_filter(output, input, chunkSize, task);
       
       mfc_put(output, writeAt + bufferStart, chunkSize, tagID, 0, 0);
       mfc_read_tag_status_all();
@@ -138,7 +129,7 @@ int main(unsigned long long speID, unsigned long long argp, unsigned long long e
       bytesWritten += chunkSize;
       writeAt += chunkSize;
       readAt += chunkSize;
-    }*/    
+    }  
   }
 
   return 0;
