@@ -11,8 +11,8 @@ typedef unsigned char byte;
 
 const double sobel_filter_y[3][3] =
 {
-    {  1,  2,  1 },
-    {  0,  0,  0 },
+    { 1,  2,  1 },
+    { 0,  0,  0 },
     { -1, -2, -1 }
 };
 
@@ -20,7 +20,7 @@ const double sobel_filter_x[3][3] =
 {
     { 1.5,  0,  -1.5 },
     { 3,    0,  -3 },
-    { 1.5,  0,  -1.5 } 
+    { 1.5,  0,  -1.5 }
 };
 
 template<typename T>
@@ -32,9 +32,9 @@ T clamp(T min, T max, T v)
 double px(byte* pixels, int x, int y, int w, int h)
 {
     if (x < 0 || y < 0)
-        return px(pixels, std::max(x,0), std::max(y, 0), w, h);
+        return px(pixels, std::max(x, 0), std::max(y, 0), w, h);
     if (x >= w || y >= h)
-        return px(pixels, std::min(x, w-1), std::min(y, h-1), w, h);
+        return px(pixels, std::min(x, w - 1), std::min(y, h - 1), w, h);
 
     auto index = (x + w * y) * 3;
     auto r = static_cast<int>(pixels[index + 0]);
@@ -87,7 +87,7 @@ void sobel_filter(FIBITMAP * image)
 
         auto value = sobel_op(input, x, y, w, h);
 
-        if (value <= 10)
+        if (value <= 50)
             value = 0;
         else
             value *= 3.0;
@@ -139,10 +139,10 @@ void gaussian_blur(FIBITMAP* input, FIBITMAP* output)
     auto kernel = gaussian_kernel<double, R>();
     auto outBytes = FreeImage_GetBits(output);
     auto inBytes = FreeImage_GetBits(input);
-   
-    for(auto y = 0; y < h; y++)
+
+    for (auto y = 0; y < h; y++)
     {
-        for(auto x = 0; x < w; x++)
+        for (auto x = 0; x < w; x++)
         {
             auto kernelSize = kernel.size();
             auto total = 0.0;
@@ -168,14 +168,14 @@ void gaussian_blur(FIBITMAP* input, FIBITMAP* output)
             auto kernelSize = kernel.size();
             auto total = 0.0;
 
-            for(auto k = 0; k < kernelSize; k++)
+            for (auto k = 0; k < kernelSize; k++)
             {
                 auto py = clamp(0, h - 1, y - R + k);
                 auto index = py * w * 3 + x * 3;
                 total += kernel[k] * tempBytes[index];
             }
 
-            auto index = x*3 + w*y*3;         
+            auto index = x * 3 + w*y * 3;
             outBytes[index + 0] = total;
             outBytes[index + 1] = total;
             outBytes[index + 2] = total;
@@ -192,9 +192,9 @@ void overlay_squares(FIBITMAP * image, FIBITMAP * overlay)
     auto height = FreeImage_GetHeight(image);
     auto width = FreeImage_GetWidth(image);
 
-    for(auto i = 0; i < width*height*3; i+=3)
+    for (auto i = 0; i < width*height * 3; i += 3)
     {
-        if(outBytes[i+1] == 255)
+        if (outBytes[i + 1] == 255)
         {
             outBytes[i + 0] = inBytes[i + 0];
             outBytes[i + 1] = inBytes[i + 1];
@@ -221,7 +221,7 @@ double edge_density(unsigned char * bytes, int x, int y, int w, int h)
             totalDensity += bytes[index + 2];
         }
     }
-    
+
     return totalDensity / ((w - x) * (h - y)*255.0);
 }
 
@@ -246,18 +246,18 @@ void detect_windows(FIBITMAP * image, int width, int height, int step)
     auto bytes = FreeImage_GetBits(image);
     auto x = 0, y = 0;
 
-    while(y < 480 && x < 640)
+    while (y < 480 && x < 640)
     {
-        auto edgeDensity = edge_density(cloneBytes, x, y, std::min(x+width, 640), std::min(y + height, 480));
-    
-        if(edgeDensity >= 0.3)
+        auto edgeDensity = edge_density(cloneBytes, x, y, std::min(x + width, 640), std::min(y + height, 480));
+
+        if (edgeDensity >= 0.3)
         {
             fill(bytes, x, y, std::min(x + width, 640), std::min(y + height, 480), 0, 255, 0);
         }
-        
+
         x += step;
 
-        if(x >= 640)
+        if (x >= 640)
         {
             y += step;
             x = 0;
@@ -271,7 +271,7 @@ int main(int argc, char * argv[])
 {
     FreeImage_Initialise();
 
-    for(auto i = 1; i <= 10; i++)
+    for (auto i = 1; i <= 10; i++)
     {
         auto in = "./inputs/" + std::to_string(i) + ".bmp";
         auto out = "./outputs/" + std::to_string(i) + "-out.bmp";
@@ -287,7 +287,7 @@ int main(int argc, char * argv[])
         FreeImage_Unload(mask);
         FreeImage_Unload(bitmap);
     }
- 
+
     FreeImage_DeInitialise();
     return 0;
 }

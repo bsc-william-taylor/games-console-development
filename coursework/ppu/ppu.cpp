@@ -21,13 +21,13 @@ void write_output(std::string filename, unsigned char* data, int w, int h)
 
 void process_image(spu_manager& spu_manager, basic_image& image, int index)
 {
-  unsigned char output[image.width * image.height * 3];
+  unsigned char output[image.width * image.height];
+  memset(output, 255, sizeof(output));
 
   image_task task __attribute__((aligned(16)));
   task.output = (unsigned long long)output;
   task.input = (unsigned long long)image.data;
-  task.components = 3;
-  task.sections = 1;//spu_manager.spe_count();
+  task.sections = spu_manager.spe_count();
   task.size.h = image.height;
   task.size.w = image.width;
 
@@ -50,7 +50,7 @@ int main(int argc, char * argv[])
   std::vector<std::string> filenames;
   std::vector<basic_image> images;
   
-  for(int i = 0; i < 1; i++)
+  for(int i = 0; i < 10; i++)
     filenames.push_back(filename("../assets/", i+1, ".bmp"));
 
   load_images(filenames, images);
@@ -60,7 +60,6 @@ int main(int argc, char * argv[])
   for(int i = 0; i < imagesCount; i++)
   { 
     process_image(spu_manager, images[i], i);
-    break;
   }
 
   unload_images(images);
