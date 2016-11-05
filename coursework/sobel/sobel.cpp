@@ -8,77 +8,76 @@
 #include "../structures.h"
 
 const int chunkSize = 15360;
-const int blurMag = 6;
-const int tagID = 3;
+const int tagID = 4;
 
-int kernel_size(int radius)
+const double sobel_filter_y[3][3] =
 {
-    return radius * 2 + 1;
+    { 1,  2,  1 },
+    { 0,  0,  0 },
+    { -1, -2, -1 }
+};
+
+const double sobel_filter_x[3][3] =
+{
+    { 1.5,  0,  -1.5 },
+    { 3,    0,  -3 },
+    { 1.5,  0,  -1.5 }
+};
+
+double px(byte* pixels, int x, int y, int w, int h)
+{
+    if (x < 0 || y < 0)
+        return px(pixels, std::max(x, 0), std::max(y, 0), w, h);
+    if (x >= w || y >= h)
+        return px(pixels, std::min(x, w - 1), std::min(y, h - 1), w, h);
+
+    return pixels[x + w * y];
 }
 
-void gaussian_kernel(double* kernel, int radius)
+double sobel_op(byte* pixels, int x, int y, int w, int h)
 {
-    const int kernelSize = radius * 2 + 1;
-    const double sqrtTwoPiTimesRadiusRecip = 1.0 / (sqrt(2.0 * M_PI) * radius);
-    const double twoRadiusSquaredRecip = 1.0 / (2.0 * radius * radius);
-    
-    double sum = 0.0;
-    double r = -radius;
-    
-    for (int i = 0; i < kernelSize; ++i, ++r)
+    double x_weight = 0.0;
+    double y_weight = 0.0;
+    double window[3][3] =
     {
-        double x = r * r;
-        kernel[i] = sqrtTwoPiTimesRadiusRecip * exp(-x * twoRadiusSquaredRecip);
-        sum += kernel[i];
-    }
-    
-    double div = sum;
-    for (int i = 0; i < kernelSize; i++)
+        { px(pixels, x - 1, y - 1, w, h), px(pixels, x, y - 1, w, h),  px(pixels, x + 1, y - 1, w, h) },
+        { px(pixels, x - 1, y    , w, h), px(pixels, x, y   , w, h),   px(pixels, x + 1, y    , w, h) },
+        { px(pixels, x - 1, y + 1, w, h), px(pixels, x, y + 1, w, h),  px(pixels, x + 1, y + 1, w, h) }
+    };
+
+    for (int i = 0; i < 3; i++)
     {
-        kernel[i] /= div;
+        for (int j = 0; j < 3; j++)
+        {
+            x_weight += window[i][j] * sobel_filter_x[i][j];
+            y_weight += window[i][j] * sobel_filter_y[i][j];
+        }
     }
+
+    return ceil(sqrt(x_weight * x_weight + y_weight * y_weight)) * 2.0;
 }
 
-void blur(byte* outBytes, byte* inBytes, int w, int h, image_task& task)
+void sobel_filter(byte* output, byte* input, int w, int h)
 {
-    const int size = kernel_size(blurMag);    
-    double kernel[size];
-    gaussian_kernel(kernel, blurMag);
-    byte tempBytes[w*h];
-    
-    for(int y = 0; y < h; y++)
+    int x = 0, y = 0;
+
+    for (int i = 0u; i < h*w; i++, x++)
     {
-        for(int x = 0; x < w; x++)
+        if (!(x < w))
         {
-            int kernelSize = size;
-            double total = 0.0;
-        
-            for (int k = 0; k < kernelSize; k++)
-            {
-                int px = clamp(0, w - 1, x - blurMag + k);
-                total += kernel[k] * inBytes[px+w*y];
-            }
-            
-            tempBytes[x+w*y] = (byte)total;
+            x = 0;
+            y++;
         }
-    }
-    
-    
-    for (int y = 0; y < h; y++)
-    {
-        for (int x = 0; x < w; x++)
-        {
-            int kernelSize = size;
-            double total = 0.0;
-            
-            for(int k = 0; k < kernelSize; k++)
-            {
-                int py = clamp(0, h - 1, y - blurMag + k);
-                total += kernel[k] * tempBytes[ py*w+x];
-            }
-            
-            outBytes[x+w*y] = (byte)total;
-        }
+
+        int value = (int)sobel_op(input, x, y, w, h);
+
+        if (value <= 50)
+            value = 0;
+        else
+            value *= 3.0;
+
+        int clamped = clamp(0, 255, int(value));
+        output[i] = clamped == 0 ? 0 : 255;
     }
 }
 
@@ -118,10 +117,7 @@ int main(unsigned long long speID, unsigned long long argp, unsigned long long e
         bytesWritten += size;
         readAt += size;
     }
-    
-    blur(output, input, 640, 80, task);
-    bytesWritten = 0;
-    index = -1;
+
     
     while(bytesWritten < bufferSize)
     {
@@ -132,7 +128,7 @@ int main(unsigned long long speID, unsigned long long argp, unsigned long long e
         byte buffer[size];
         for(int i = 0; i < size; i++)
         {
-            buffer[i] = output[++index];
+            buffer[i] = input[++index];
         }
         
         mfc_put(buffer, writeAt, size, tagID, 0, 0);

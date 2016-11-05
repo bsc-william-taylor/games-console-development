@@ -37,6 +37,11 @@ void process_image(spu_manager& spu_manager, basic_image& image, int index)
 	spu_manager.spe_program("./blur/blur");
 	spu_manager.spe_run(task.sections);
 
+  LOG("%s %s", "Running -> ", "./sobel/sobel");
+  
+	spu_manager.spe_program("./sobel/sobel");
+	spu_manager.spe_run(task.sections);
+
   LOG("%s %s", "Writing output -> ", filename("./O", index+1, ".bmp").c_str());
 
   write_output(filename("./O", index+1, ".bmp"), output, image.width, image.height);
@@ -50,7 +55,7 @@ int main(int argc, char * argv[])
   std::vector<std::string> filenames;
   std::vector<basic_image> images;
   
-  for(int i = 0; i < 10; i++)
+  for(int i = 0; i < 1; i++)
     filenames.push_back(filename("../assets/", i+1, ".bmp"));
 
   load_images(filenames, images);

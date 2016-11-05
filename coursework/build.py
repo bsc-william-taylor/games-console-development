@@ -44,4 +44,5 @@ if build_spu:
     print('building spu source')
     if "Window" not in os_platform:
         build('blur/blur', 'blur/*.cpp')
+        build('sobel/sobel', 'sobel/*.cpp')
         
