@@ -30,13 +30,14 @@ struct region
 // size: 64 bytes
 struct image_task
 {
+  unsigned long long original;
   unsigned long long output;
   unsigned long long input;
   unsigned int components;
   unsigned int sections;
   region<int> work;
   range<int> size;
-  char unused[16];
+  char unused[8];
 };
 
 typedef unsigned char byte;

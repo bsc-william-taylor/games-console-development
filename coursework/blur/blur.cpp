@@ -6,6 +6,7 @@
 #include <vector>
 
 #include "../structures.h"
+#include "../mfc.h"
 
 const int chunkSize = 15360;
 const int blurMag = 6;
@@ -63,7 +64,6 @@ void blur(byte* outBytes, byte* inBytes, int w, int h, image_task& task)
         }
     }
     
-    
     for (int y = 0; y < h; y++)
     {
         for (int x = 0; x < w; x++)
@@ -74,7 +74,7 @@ void blur(byte* outBytes, byte* inBytes, int w, int h, image_task& task)
             for(int k = 0; k < kernelSize; k++)
             {
                 int py = clamp(0, h - 1, y - blurMag + k);
-                total += kernel[k] * tempBytes[ py*w+x];
+                total += kernel[k] * tempBytes[py*w+x];
             }
             
             outBytes[x+w*y] = (byte)total;
@@ -93,54 +93,11 @@ int main(unsigned long long speID, unsigned long long argp, unsigned long long e
     unsigned long long totalBytes = task.size.w * task.size.h;
     unsigned long long bufferSize = totalBytes / task.sections;
     unsigned long long bufferStart = bufferSize * spu_read_in_mbox();
-    unsigned long long writeAt = task.output + bufferStart;
-    unsigned long long readAt = task.input + bufferStart;
-    unsigned long long bytesWritten = 0;
     
     byte input[bufferSize], output[bufferSize];    
-    int index = -1;
-    
-    while(bytesWritten < bufferSize)
-    {
-        int size = chunkSize;
-        if(bytesWritten + size >= bufferSize)
-            size = bufferSize - bytesWritten;
-        
-        byte buffer[size];
-        mfc_get(buffer, readAt, size, tagID, 0, 0);
-        mfc_read_tag_status_any();
-        
-        for(int i =  0; i < size; i++)
-        {
-            input[++index] = buffer[i];
-        }
-        
-        bytesWritten += size;
-        readAt += size;
-    }
-    
+    read(bufferSize, chunkSize, input, task.input + bufferStart, tagID);
+
     blur(output, input, 640, 80, task);
-    bytesWritten = 0;
-    index = -1;
-    
-    while(bytesWritten < bufferSize)
-    {
-        int size = chunkSize;
-        if(bytesWritten + size >= bufferSize)
-            size = bufferSize - bytesWritten;
-        
-        byte buffer[size];
-        for(int i = 0; i < size; i++)
-        {
-            buffer[i] = output[++index];
-        }
-        
-        mfc_put(buffer, writeAt, size, tagID, 0, 0);
-        mfc_read_tag_status_all();
-        
-        bytesWritten += size;
-        writeAt += size;
-    }
-    
+    write(bufferSize, chunkSize, output, task.output + bufferStar, tagID);        
     return 0;
 }

@@ -24,6 +24,10 @@ inline std::string __format__(char * fmt)
     return ss.str();
 }
 
-#define LOG(format, ...) printf(__format__(format).c_str(), __fn__(__FILE__), __LINE__, __VA_ARGS__); 
+#ifdef DEBUG
+    #define LOG(format, ...) printf(__format__(format).c_str(), __fn__(__FILE__), __LINE__, __VA_ARGS__); 
+#else
+    #define LOG(format, ...) {}
+#endif
 
 #endif

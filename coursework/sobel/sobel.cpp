@@ -6,6 +6,7 @@
 #include <vector>
 
 #include "../structures.h"
+#include "../mfc.h"
 
 const int chunkSize = 15360;
 const int tagID = 4;
@@ -61,7 +62,7 @@ void sobel_filter(byte* output, byte* input, int w, int h)
 {
     int x = 0, y = 0;
 
-    for (int i = 0u; i < h*w; i++, x++)
+    for (int i = 0; i < h*w; i++, x++)
     {
         if (!(x < w))
         {
@@ -92,51 +93,11 @@ int main(unsigned long long speID, unsigned long long argp, unsigned long long e
     unsigned long long totalBytes = task.size.w * task.size.h;
     unsigned long long bufferSize = totalBytes / task.sections;
     unsigned long long bufferStart = bufferSize * spu_read_in_mbox();
-    unsigned long long writeAt = task.output + bufferStart;
-    unsigned long long readAt = task.input + bufferStart;
-    unsigned long long bytesWritten = 0;
-    
-    byte input[bufferSize], output[bufferSize];    
-    int index = -1;
-    
-    while(bytesWritten < bufferSize)
-    {
-        int size = chunkSize;
-        if(bytesWritten + size >= bufferSize)
-            size = bufferSize - bytesWritten;
-        
-        byte buffer[size];
-        mfc_get(buffer, readAt, size, tagID, 0, 0);
-        mfc_read_tag_status_any();
-        
-        for(int i =  0; i < size; i++)
-        {
-            input[++index] = buffer[i];
-        }
-        
-        bytesWritten += size;
-        readAt += size;
-    }
 
-    
-    while(bytesWritten < bufferSize)
-    {
-        int size = chunkSize;
-        if(bytesWritten + size >= bufferSize)
-            size = bufferSize - bytesWritten;
-        
-        byte buffer[size];
-        for(int i = 0; i < size; i++)
-        {
-            buffer[i] = input[++index];
-        }
-        
-        mfc_put(buffer, writeAt, size, tagID, 0, 0);
-        mfc_read_tag_status_all();
-        
-        bytesWritten += size;
-        writeAt += size;
-    }
-    
+    byte input[bufferSize], output[bufferSize];    
+    read(bufferSize, chunkSize, input, task.output + bufferStart, tagID);
+
+    sobel_filter(output, input, 640,  80);
+    write(bufferSize, chunkSize, output, task.output + bufferStart, tagID);    
     return 0;
 }

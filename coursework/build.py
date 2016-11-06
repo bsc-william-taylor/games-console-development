@@ -20,7 +20,7 @@ os.chdir(working_directory)
 def build(output, input):
     cmd = 'spu-g++ -o ' + output + ' ' + input
     if optimisations == True:
-        cmd += ' -O2'
+        cmd += ' -O3'
     os.system(cmd)
 
 if len(sys.argv) > 1:
@@ -37,7 +37,7 @@ if build_ppu:
     if "Window" not in os_platform:
         cmd = 'ppu-g++ -o ppu/ppu ../common/*.cpp ppu/*.cpp -lspe2 '
         if optimisations == True:
-            cmd += ' -O2'
+            cmd += ' -O3'
         os.system(cmd)
 
 if build_spu:
@@ -45,4 +45,6 @@ if build_spu:
     if "Window" not in os_platform:
         build('blur/blur', 'blur/*.cpp')
         build('sobel/sobel', 'sobel/*.cpp')
+        build('detection/detection', 'detection/*.cpp')
+        build('overlay/overlay', 'overlay/*.cpp')
         
