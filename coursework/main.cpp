@@ -3,13 +3,19 @@
 #include <vector>
 #include <string>
 
+#include "../common/ppu_benchmark.h"
 #include "../common/spu_manager.h"
-#include "../common/benchmark.h"
 #include "../common/image.h"
 #include "../common/log.h"
-#include "structures.h"
+#include "main.h"
 
-const int IMAGES = 10;
+const char* programs[4] = 
+{
+   "./blur/blur",
+   "./sobel/sobel",
+   "./detection/detection",
+   "./overlay/overlay"
+};
 
 void write_output(std::string filename, unsigned char* data, int w, int h)
 {
@@ -23,10 +29,12 @@ void write_output(std::string filename, unsigned char* data, int w, int h)
 
 void process_image(spu_manager& spu_manager, basic_image& image, int index)
 {
-  unsigned char original[image.width * image.height];
-  unsigned char output[image.width * image.height];
-  memset(output, 255, sizeof(output));
-  for(int i = 0; i < sizeof(original); i++)
+  const int imageSize = image.width * image.height;
+
+  unsigned char original[imageSize];
+  unsigned char output[imageSize];
+
+  for(int i = 0; i < imageSize; i++)
   {
     original[i] = image.data[i];
   }
@@ -39,15 +47,9 @@ void process_image(spu_manager& spu_manager, basic_image& image, int index)
   task.size.h = image.height;
   task.size.w = image.width;
 
-  std::vector<std::string> programs;
-  programs.push_back("./blur/blur");
-  programs.push_back("./sobel/sobel");
-  programs.push_back("./detection/detection");
-  programs.push_back("./overlay/overlay");
-  
-  for(int i = 0; i < programs.size(); i++)
+  for(int i = 0; i < 4; i++)
   {
-    LOG("%s %s", "Running -> ", programs[i].c_str());
+    LOG("%s %s", "Running -> ", programs[i]);
 
     spu_manager.spe_arg((void*)&task, sizeof(image_task));
     spu_manager.spe_program(programs[i]);
@@ -61,13 +63,13 @@ void process_image(spu_manager& spu_manager, basic_image& image, int index)
 
 int main(int argc, char * argv[])
 {
+  ppu_benchmark track("COURSEWORK");
 	spu_manager spu_manager(true);
-	benchmark track("coursework");
 
   std::vector<std::string> filenames;
   std::vector<basic_image> images;
   
-  for(int i = 0; i < IMAGES; i++)
+  for(int i = 0; i < 10; i++)
   {
     filenames.push_back(filename("../assets/", i+1, ".bmp"));
   }
@@ -76,7 +78,7 @@ int main(int argc, char * argv[])
 
   LOG("%s %d %s", "Loaded & Processing", IMAGES, "images");
 
-  for(int i = 0; i < IMAGES; i++)
+  for(int i = 0; i < filenames.size(); i++)
   { 
     process_image(spu_manager, images[i], i);
   }

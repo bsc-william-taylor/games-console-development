@@ -1,8 +1,12 @@
 
-#ifndef __STRUCTS_H_
-#define __STRUCTS_H_
+#ifndef __MAIN_H_
+#define __MAIN_H_
 
 #include <math.h>
+
+// If you want to benchmark PPU + SPU's uncomment
+//#define BENCHMARK_PPU
+//#define BENCHMARK_SPU
 
 // size: 8 bytes
 template<typename T>
@@ -47,7 +51,6 @@ T clamp(T min, T max, T v)
 {
     return std::max(min, std::min(v, max));
 }
-
 
 #endif
 

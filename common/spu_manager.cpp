@@ -81,7 +81,6 @@ void spu_manager::spe_run(int count)
 			perror("spe_run, spe_context_create, failed");
 			return;
 		}
-
 		
 		int err = spe_program_load(context, image);
 
@@ -95,16 +94,15 @@ void spu_manager::spe_run(int count)
 		data[i].argp = spu_arg_address;
 		data[i].speid = context;
 		
-    int spuID = i;
 		int perr = pthread_create(&data[i].pthread, NULL, &ppu_pthread_function, &data[i]);
-    spe_in_mbox_write(context, (unsigned int*)&spuID, 1, SPE_MBOX_ANY_NONBLOCKING);
-
+  
 		if(perr != 0)
 		{
 			perror("spe_run, pthread_create");
 			return;
 		}
 
+		 spe_in_mbox_write(context, (unsigned int*)&i, 1, SPE_MBOX_ANY_NONBLOCKING);
 	}
 
 	for(int i = 0; i < processes; ++i)

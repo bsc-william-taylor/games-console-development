@@ -3,34 +3,41 @@
 #include <spu_mfcio.h>
 #include <spu_intrinsics.h>
 #include <algorithm>
-#include <vector>
 
-#include "../structures.h"
+#include "../../common/spu_benchmark.h"
+#include "../main.h"
 #include "../mfc.h"
 
+const int workRegionWidth = 640;
+const int workRegionHeight = 80;
 const int chunkSize = 15360;
 const int tagID = 4;
 
 const double sobel_filter_y[3][3] =
 {
-    { 1,  2,  1 },
-    { 0,  0,  0 },
+    {  1,  2,  1  },
+    {  0,  0,  0  },
     { -1, -2, -1 }
 };
 
 const double sobel_filter_x[3][3] =
 {
     { 1.5,  0,  -1.5 },
-    { 3,    0,  -3 },
+    { 3,    0,  -3   },
     { 1.5,  0,  -1.5 }
 };
 
 double px(byte* pixels, int x, int y, int w, int h)
 {
     if (x < 0 || y < 0)
+    {
         return px(pixels, std::max(x, 0), std::max(y, 0), w, h);
+    }
+
     if (x >= w || y >= h)
+    {
         return px(pixels, std::min(x, w - 1), std::min(y, h - 1), w, h);
+    }
 
     return pixels[x + w * y];
 }
@@ -42,7 +49,7 @@ double sobel_op(byte* pixels, int x, int y, int w, int h)
     double window[3][3] =
     {
         { px(pixels, x - 1, y - 1, w, h), px(pixels, x, y - 1, w, h),  px(pixels, x + 1, y - 1, w, h) },
-        { px(pixels, x - 1, y    , w, h), px(pixels, x, y   , w, h),   px(pixels, x + 1, y    , w, h) },
+        { px(pixels, x - 1, y    , w, h), px(pixels, x, y    , w, h),  px(pixels, x + 1, y    , w, h) },
         { px(pixels, x - 1, y + 1, w, h), px(pixels, x, y + 1, w, h),  px(pixels, x + 1, y + 1, w, h) }
     };
 
@@ -73,9 +80,13 @@ void sobel_filter(byte* output, byte* input, int w, int h)
         int value = (int)sobel_op(input, x, y, w, h);
 
         if (value <= 50)
+        {
             value = 0;
+        }
         else
+        {
             value *= 3;
+        }
 
         int clamped = clamp(0, 255, int(value));
         output[i] = clamped == 0 ? 0 : 255;
@@ -84,6 +95,8 @@ void sobel_filter(byte* output, byte* input, int w, int h)
 
 int main(unsigned long long speID, unsigned long long argp, unsigned long long envp)
 {
+    const int uniqueID = spu_read_in_mbox();
+    spu_benchmark track("sobel", uniqueID+1);
     image_task task __attribute__((aligned(16)));
     
     mfc_write_tag_mask(1<<tagID);
@@ -92,12 +105,12 @@ int main(unsigned long long speID, unsigned long long argp, unsigned long long e
     
     unsigned long long totalBytes = task.size.w * task.size.h;
     unsigned long long bufferSize = totalBytes / task.sections;
-    unsigned long long bufferStart = bufferSize * spu_read_in_mbox();
+    unsigned long long bufferStart = bufferSize * uniqueID;
 
     byte input[bufferSize], output[bufferSize];    
     read(bufferSize, chunkSize, input, task.output + bufferStart, tagID);
 
-    sobel_filter(output, input, 640,  80);
+    sobel_filter(output, input, workRegionWidth, workRegionHeight);
     write(bufferSize, chunkSize, output, task.output + bufferStart, tagID);    
     return 0;
 }

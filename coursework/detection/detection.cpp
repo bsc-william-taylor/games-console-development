@@ -3,13 +3,31 @@
 #include <spu_mfcio.h>
 #include <spu_intrinsics.h>
 #include <algorithm>
-#include <vector>
 
-#include "../structures.h"
+#include "../../common/spu_benchmark.h"
+#include "../main.h"
 #include "../mfc.h"
 
 const int chunkSize = 15360;
+const int outColour = 255;
 const int tagID = 1;
+
+const double edgeTolerance = 0.3;
+
+const int workRegionWidth = 640;
+const int workRegionHeight = 80;
+
+const int windowWidth = 45;
+const int windowHeight = 45;
+const int windowStep = 12;
+
+const int halfRegionExpansion = 20;
+const int regionExpansion = 40;
+
+double normalise(double density, int x, int y, int w, int h)
+{
+    return density / ((w - x) * (h - y) * 255.0);
+}
 
 double edge_density(unsigned char * bytes, int x, int y, int w, int h)
 {
@@ -19,12 +37,11 @@ double edge_density(unsigned char * bytes, int x, int y, int w, int h)
     {
         for (int px = x; px < w; px++)
         {
-            int index = px + 640 * py;
-            totalDensity += bytes[index];
+            totalDensity += bytes[px + 640 * py];
         }
     }
 
-    return totalDensity / ((w - x) * (h - y)*255.0);
+    return normalise(totalDensity, x, y, w, h);
 }
 
 void fill(byte* bytes, int x, int y, int w, int h, int c)
@@ -33,28 +50,28 @@ void fill(byte* bytes, int x, int y, int w, int h, int c)
     {
         for (int px = x; px < w; px++)
         {
-            bytes[px + 640 * py] = c;
+            bytes[px + workRegionWidth * py] = c;
         }
     }
 }
 
-void detect_windows(byte* output, byte* input, int width, int height, int step)
+void detect_windows(byte* output, byte* input, int width, int height, int step, int padding)
 {
-    int w = 640, h = 80;
+    int w = workRegionWidth, h = workRegionHeight + padding;
     int x = 0, y = 0;
 
-    while (y < 480 && x < 640)
+    while (y < h && x < w)
     {
         double edgeDensity = edge_density(input, x, y, std::min(x + width, w), std::min(y + height, h));
 
-        if (edgeDensity >= 0.3)
+        if (edgeDensity >= edgeTolerance)
         {
-            fill(output, x, y, std::min(x + width, w), std::min(y + height, h), 255);
+            fill(output, x, y, std::min(x + width, w), std::min(y + height, h), outColour);
         }
-
+        
         x += step;
 
-        if (x >= 640)
+        if (x >= w)
         {
             y += step;
             x = 0;
@@ -62,9 +79,10 @@ void detect_windows(byte* output, byte* input, int width, int height, int step)
     }
 }
 
-
 int main(unsigned long long speID, unsigned long long argp, unsigned long long envp)
 {
+    const int uniqueID = spu_read_in_mbox();
+    spu_benchmark track("detection", uniqueID+1);
     image_task task __attribute__((aligned(16)));
     
     mfc_write_tag_mask(1<<tagID);
@@ -73,11 +91,22 @@ int main(unsigned long long speID, unsigned long long argp, unsigned long long e
     
     unsigned long long totalBytes = task.size.w * task.size.h;
     unsigned long long bufferSize = totalBytes / task.sections;
-    unsigned long long bufferStart = bufferSize * spu_read_in_mbox();
-    
+    unsigned long long bufferStart = bufferSize * uniqueID;
+    unsigned long long address = (task.output + bufferStart);
+    unsigned long long padding = 0;
+
+    if(uniqueID != 0 && uniqueID != 5)
+    {
+        bufferSize += workRegionWidth * regionExpansion;
+        address -= workRegionWidth * halfRegionExpansion;
+        padding = regionExpansion;
+    }
+   
     byte input[bufferSize], output[bufferSize];    
-    read(bufferSize, chunkSize, input, task.output + bufferStart, tagID);
-    detect_windows(output, input, 45, 45, 12);
-    write(bufferSize, chunkSize, output, task.output + bufferStart, tagID);       
+    read(bufferSize, chunkSize, input, address, tagID);
+
+    detect_windows(output, input, windowWidth, windowHeight, windowStep, padding);
+
+    write(bufferSize, chunkSize, output, address, tagID);    
     return 0;
 }

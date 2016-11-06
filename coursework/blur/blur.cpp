@@ -3,11 +3,13 @@
 #include <spu_mfcio.h>
 #include <spu_intrinsics.h>
 #include <algorithm>
-#include <vector>
 
-#include "../structures.h"
+#include "../../common/spu_benchmark.h"
+#include "../main.h"
 #include "../mfc.h"
 
+const int workRegionHeight = 80;
+const int workRegionWidth = 640;
 const int chunkSize = 15360;
 const int blurMag = 6;
 const int tagID = 3;
@@ -19,7 +21,7 @@ int kernel_size(int radius)
 
 void gaussian_kernel(double* kernel, int radius)
 {
-    const int kernelSize = radius * 2 + 1;
+    const int kernelSize = kernel_size(radius);
     const double sqrtTwoPiTimesRadiusRecip = 1.0 / (sqrt(2.0 * M_PI) * radius);
     const double twoRadiusSquaredRecip = 1.0 / (2.0 * radius * radius);
     
@@ -84,6 +86,8 @@ void blur(byte* outBytes, byte* inBytes, int w, int h, image_task& task)
 
 int main(unsigned long long speID, unsigned long long argp, unsigned long long envp)
 {
+    const int spuID = spu_read_in_mbox();
+    spu_benchmark track("blur", spuID+1);
     image_task task __attribute__((aligned(16)));
     
     mfc_write_tag_mask(1<<tagID);
@@ -92,12 +96,12 @@ int main(unsigned long long speID, unsigned long long argp, unsigned long long e
     
     unsigned long long totalBytes = task.size.w * task.size.h;
     unsigned long long bufferSize = totalBytes / task.sections;
-    unsigned long long bufferStart = bufferSize * spu_read_in_mbox();
+    unsigned long long bufferStart = bufferSize * spuID;
     
     byte input[bufferSize], output[bufferSize];    
     read(bufferSize, chunkSize, input, task.input + bufferStart, tagID);
 
-    blur(output, input, 640, 80, task);
+    blur(output, input, workRegionWidth, workRegionHeight, task);
     write(bufferSize, chunkSize, output, task.output + bufferStart, tagID);        
     return 0;
 }

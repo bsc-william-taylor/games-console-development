@@ -6,9 +6,7 @@
 #include <spu_mfcio.h>
 #include <spu_intrinsics.h>
 
-typedef unsigned long long ull;
-
-inline void write(int bufferSize, int chunkSize, unsigned char* output, ull writeAt, int tagID)
+inline void write(int bufferSize, int chunkSize, unsigned char* output, unsigned long long writeAt, int tagID)
 {
     int bytesWritten = 0;
     int index = -1;
@@ -16,8 +14,11 @@ inline void write(int bufferSize, int chunkSize, unsigned char* output, ull writ
     while(bytesWritten < bufferSize)
     {
         int size = chunkSize;
+        
         if(bytesWritten + size >= bufferSize)
+        {
             size = bufferSize - bytesWritten;
+        }
         
         unsigned char buffer[size];
         for(int i = 0; i < size; i++)
@@ -33,7 +34,7 @@ inline void write(int bufferSize, int chunkSize, unsigned char* output, ull writ
     }
 }
 
-inline void read(int bufferSize, int chunkSize, unsigned char* input, ull readAt, int tagID)
+inline void read(int bufferSize, int chunkSize, unsigned char* input, unsigned long long readAt, int tagID)
 {
     int bytesRead = 0;
     int index = -1;
@@ -60,6 +61,5 @@ inline void read(int bufferSize, int chunkSize, unsigned char* input, ull readAt
         readAt += size;
     }
 }
-
 
 #endif
