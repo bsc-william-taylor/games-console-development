@@ -35,7 +35,7 @@ if len(sys.argv) > 1:
 if build_ppu:
     print('building ppu source')
     if "Window" not in os_platform:
-        cmd = 'ppu-g++ -o ppu/ppu ../common/*.cpp ppu/*.cpp -lspe2 '
+        cmd = 'ppu-g++ -o app ../common/*.cpp main.cpp -lspe2 '
         if optimisations == True:
             cmd += ' -O3'
         os.system(cmd)

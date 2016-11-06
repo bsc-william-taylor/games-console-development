@@ -3,11 +3,11 @@
 #include <vector>
 #include <string>
 
-#include "../../common/spu_manager.h"
-#include "../../common/benchmark.h"
-#include "../../common/image.h"
-#include "../../common/log.h"
-#include "../structures.h"
+#include "../common/spu_manager.h"
+#include "../common/benchmark.h"
+#include "../common/image.h"
+#include "../common/log.h"
+#include "structures.h"
 
 const int IMAGES = 10;
 

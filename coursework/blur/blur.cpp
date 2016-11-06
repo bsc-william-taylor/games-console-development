@@ -98,6 +98,6 @@ int main(unsigned long long speID, unsigned long long argp, unsigned long long e
     read(bufferSize, chunkSize, input, task.input + bufferStart, tagID);
 
     blur(output, input, 640, 80, task);
-    write(bufferSize, chunkSize, output, task.output + bufferStar, tagID);        
+    write(bufferSize, chunkSize, output, task.output + bufferStart, tagID);        
     return 0;
 }

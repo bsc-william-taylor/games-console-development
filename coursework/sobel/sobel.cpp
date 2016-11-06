@@ -75,7 +75,7 @@ void sobel_filter(byte* output, byte* input, int w, int h)
         if (value <= 50)
             value = 0;
         else
-            value *= 3.0;
+            value *= 3;
 
         int clamped = clamp(0, 255, int(value));
         output[i] = clamped == 0 ? 0 : 255;

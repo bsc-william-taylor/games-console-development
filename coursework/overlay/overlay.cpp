@@ -15,7 +15,7 @@ void overlay_squares(byte* output, byte* input, byte*overlay)
 {
     for (int i = 0; i < 640*80; i++)
     {
-        output[i] = input[i] == 255 ? overlay[i] : overlay[i] * 0.4;
+        output[i] = input[i] == 255 ? overlay[i] : (byte)(overlay[i] * 0.4);
     }
 }
 
