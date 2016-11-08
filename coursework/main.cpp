@@ -9,6 +9,7 @@
 #include "../common/log.h"
 #include "main.h"
 
+const int programsToRun = 4;
 const char* programs[4] = 
 {
    "./blur/blur",
@@ -47,7 +48,7 @@ void process_image(spu_manager& spu_manager, basic_image& image, int index)
   task.size.h = image.height;
   task.size.w = image.width;
 
-  for(int i = 0; i < 4; i++)
+  for(int i = 0; i < programsToRun; i++)
   {
     LOG("%s %s", "Running -> ", programs[i]);
 
