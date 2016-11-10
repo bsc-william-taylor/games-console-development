@@ -22,10 +22,10 @@ public:
 
 	~spu_benchmark() 
 	{
-		#ifdef BENCHMARK_SPU
+		//#ifdef BENCHMARK_SPU
 		double ms = -spu_read_decrementer() / TICKS_PER_MS;
 		printf("%s(SPU -> %d): %.0fms \n", uniqueName, spuID, ms); 
-		#endif
+		//#endif
 	}
 };
 

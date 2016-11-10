@@ -1,4 +1,3 @@
-
 #include <stdio.h>
 #include <spu_mfcio.h>
 #include <spu_intrinsics.h>
@@ -12,7 +11,7 @@ const int chunkSize = 15360;
 const int outColour = 255;
 const int tagID = 1;
 
-const double edgeTolerance = 0.3;
+const float edgeTolerance = 0.3;
 
 const int workRegionWidth = 640;
 const int workRegionHeight = 80;
@@ -24,14 +23,13 @@ const int windowStep = 12;
 const int halfRegionExpansion = 20;
 const int regionExpansion = 40;
 
-double normalise(double density, int x, int y, int w, int h)
-{
-    return density / ((w - x) * (h - y) * 255.0);
-}
+#define normalise(density, x, y, w, h) ((density) / (((w) - (x)) * ((h) - (y)) * 255.0f))
+#define max(a, b) ((a) > (b)) ? (a) : (b)
+#define min(a, b) ((a) < (b)) ? (a) : (b)
 
-double edge_density(unsigned char * bytes, int x, int y, int w, int h)
+float edge_density(unsigned char * bytes, int x, int y, int w, int h)
 {
-    double totalDensity = 0.0;
+    float totalDensity = 0.0;
 
     for (int py = y; py < h; py++)
     {
@@ -62,11 +60,11 @@ void detect_windows(byte* output, byte* input, int width, int height, int step, 
 
     while (y < h && x < w)
     {
-        double edgeDensity = edge_density(input, x, y, std::min(x + width, w), std::min(y + height, h));
+        float edgeDensity = edge_density(input, x, y, min(x + width, w), min(y + height, h));
 
         if (edgeDensity >= edgeTolerance)
         {
-            fill(output, x, y, std::min(x + width, w), std::min(y + height, h), outColour);
+            fill(output, x, y, min(x + width, w), min(y + height, h), outColour);
         }
         
         x += step;

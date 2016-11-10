@@ -28,9 +28,11 @@ std::string filename(std::string path, T value, std::string ext)
     return ss.str();
 }
 
-void load_images(std::vector<std::string>& fns, std::vector<basic_image>& imgs);
-void unload_images(std::vector<basic_image>& imgs);
-void write_images(std::vector<basic_image>& imgs);
+//void load_images(std::vector<std::string>& fns, std::vector<basic_image>& imgs);
+void load_images(char **fns, int number_of_files, basic_image *imgs);
+void unload_images(basic_image* imgs, int count);
+//void write_images(std::vector<basic_image>& imgs);
 void write_image(basic_image& image);
 
 #endif
+
