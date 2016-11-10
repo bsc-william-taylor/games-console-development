@@ -9,7 +9,6 @@
 #include "../common/log.h"
 #include "main.h"
 
-const int programsToRun = 4;
 const char* programs[4] = 
 {
    "./blur/blur",
@@ -48,7 +47,7 @@ void process_image(spu_manager& spu_manager, basic_image& image, int index)
   task.size.h = image.height;
   task.size.w = image.width;
 
-  for(int i = 0; i < programsToRun; i++)
+  for(int i = 0; i < 4; i++)
   {
     LOG("%s %s", "Running -> ", programs[i]);
 
@@ -62,28 +61,40 @@ void process_image(spu_manager& spu_manager, basic_image& image, int index)
   write_output(filename("./O", index+1, ".bmp"), output, image.width, image.height);
 }
 
+#define array_count(arr) (sizeof(arr) / sizeof((arr)[0]))
+
 int main(int argc, char * argv[])
 {
-  ppu_benchmark track("COURSEWORK");
-	spu_manager spu_manager(true);
+    for(int _i = 0; _i < 1; ++_i)
+    {
+        ppu_benchmark track("COURSEWORK");
+        spu_manager spu_manager(true);
 
-  std::vector<std::string> filenames;
-  std::vector<basic_image> images;
+        char *filenames[10] = {"../assets/1.bmp",
+                               "../assets/2.bmp",
+                               "../assets/3.bmp",
+                               "../assets/4.bmp",
+                               "../assets/5.bmp",
+                               "../assets/6.bmp",
+                               "../assets/7.bmp",
+                               "../assets/8.bmp",
+                               "../assets/9.bmp",
+                               "../assets/10.bmp"};
+        int number_of_files = array_count(filenames);
+
+        //std::vector<basic_image> images;
+        basic_image images[10];
   
-  for(int i = 0; i < 10; i++)
-  {
-    filenames.push_back(filename("../assets/", i+1, ".bmp"));
-  }
+        load_images(filenames, number_of_files, images);
 
-  load_images(filenames, images);
+        LOG("%s %d %s", "Loaded & Processing", IMAGES, "images");
 
-  LOG("%s %d %s", "Loaded & Processing", IMAGES, "images");
+        for(int i = 0; i < number_of_files; ++i)
+        { 
+            process_image(spu_manager, images[i], i);
+        }
 
-  for(int i = 0; i < filenames.size(); i++)
-  { 
-    process_image(spu_manager, images[i], i);
-  }
-
-  unload_images(images);
-  return 0;
+        unload_images(images, number_of_files);
+    }
+    return 0;
 }
