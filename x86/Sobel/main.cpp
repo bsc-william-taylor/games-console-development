@@ -1,33 +1,32 @@
 #define _USE_MATH_DEFINES
+
 #include "FreeImage.h"
+
+#pragma comment(lib, "freeimage.lib")
+
 #include <algorithm>
+#include <functional>
+#include <iostream>
 #include <vector>
 #include <string>
 #include <math.h>
-
 #include <ctime>
-#include <iostream>
-#include <functional>
 
-void timeit(std::function<void()> func) {
-    std::clock_t start = std::clock();
+using byte = unsigned char;
 
-    func();
-
-    int ms = (std::clock() - start) / (double)(CLOCKS_PER_SEC / 1000);
-
+void timeit(std::function<void()> operation) 
+{
+    auto start = clock();
+    operation();
+    auto ms = (clock() - start) / static_cast<double>(CLOCKS_PER_SEC / 1000);
     std::cout << "Finished in " << ms << "ms" << std::endl;
     std::cin.get();
 }
 
-#pragma comment(lib, "freeimage.lib")
-
-typedef unsigned char byte;
-
 const double sobel_filter_y[3][3] =
 {
-    { 1,  2,  1 },
-    { 0,  0,  0 },
+    {  1,  2,  1 },
+    {  0,  0,  0 },
     { -1, -2, -1 }
 };
 
@@ -282,31 +281,32 @@ void detect_windows(FIBITMAP * image, int width, int height, int step)
     FreeImage_Unload(clone);
 }
 
+void detect_regions()
+{
+    FreeImage_Initialise();
+
+    for (auto i = 1; i <= 10; i++)
+    {
+        auto in = "./inputs/" + std::to_string(i) + ".bmp";
+        auto out = "./outputs/" + std::to_string(i) + "-out.bmp";
+        auto bitmap = FreeImage_Load(FIF_BMP, in.c_str());
+        auto mask = FreeImage_Clone(bitmap);
+
+        gaussian_blur<6>(bitmap, mask);
+        sobel_filter(mask);
+        detect_windows(mask, 45, 45, 12);
+        overlay_squares(bitmap, mask);
+
+        FreeImage_Save(FIF_BMP, mask, out.c_str());
+        FreeImage_Unload(mask);
+        FreeImage_Unload(bitmap);
+    }
+
+    FreeImage_DeInitialise();
+}
+
 int main(int argc, char * argv[])
 {
-    timeit([]()
-    {
-        FreeImage_Initialise();
-
-        for (auto i = 1; i <= 10; i++)
-        {
-            auto in = "./inputs/" + std::to_string(i) + ".bmp";
-            auto out = "./outputs/" + std::to_string(i) + "-out.bmp";
-            auto bitmap = FreeImage_Load(FIF_BMP, in.c_str());
-            auto mask = FreeImage_Clone(bitmap);
-
-            gaussian_blur<6>(bitmap, mask);
-            sobel_filter(mask);
-            detect_windows(mask, 45, 45, 12);
-            overlay_squares(bitmap, mask);
-
-            FreeImage_Save(FIF_BMP, mask, out.c_str());
-            FreeImage_Unload(mask);
-            FreeImage_Unload(bitmap);
-        }
-
-        FreeImage_DeInitialise();
-    });
-
+    timeit(detect_regions);
     return 0;
 }

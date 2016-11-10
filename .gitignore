@@ -4,6 +4,13 @@
 *.o
 *.obj
 
+# Folders
+./x86/.vs
+./x86/Sobel/Release
+./x86/Sobel/Debug
+./x86/Release
+./x86/Debug
+
 # Precompiled Headers
 *.gch
 *.pch
@@ -11,7 +18,6 @@
 # Compiled Dynamic libraries
 *.so
 *.dylib
-*.dll
 
 # Fortran module files
 *.mod
@@ -21,7 +27,6 @@
 *.lai
 *.la
 *.a
-*.lib
 
 # Executables
 *.exe
