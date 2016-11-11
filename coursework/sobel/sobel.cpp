@@ -1,4 +1,3 @@
-
 #include <stdio.h>
 #include <spu_mfcio.h>
 #include <spu_intrinsics.h>
@@ -13,84 +12,37 @@ const int workRegionHeight = 80;
 const int chunkSize = 15360;
 const int tagID = 4;
 
-const double sobel_filter_y[3][3] =
+const float sobel_filter_y[3][3] =
 {
     {  1,  2,  1  },
     {  0,  0,  0  },
     { -1, -2, -1 }
 };
 
-const double sobel_filter_x[3][3] =
+const float sobel_filter_x[3][3] =
 {
     { 1.5,  0,  -1.5 },
     { 3,    0,  -3   },
     { 1.5,  0,  -1.5 }
 };
 
-double px(byte* pixels, int x, int y, int w, int h)
+// Replacing std::min and std::max saved about 5 ms.
+#define max(a, b) (((a) > (b)) ? (a) : (b))
+#define min(a, b) (((a) < (b)) ? (a) : (b))
+
+inline float px(byte* pixels, int x, int y, int w, int h)
 {
     if (x < 0 || y < 0)
     {
-        return px(pixels, std::max(x, 0), std::max(y, 0), w, h);
+        return px(pixels, max(x, 0), max(y, 0), w, h);
     }
 
     if (x >= w || y >= h)
     {
-        return px(pixels, std::min(x, w - 1), std::min(y, h - 1), w, h);
+        return px(pixels, min(x, w - 1), min(y, h - 1), w, h);
     }
 
     return pixels[x + w * y];
-}
-
-double sobel_op(byte* pixels, int x, int y, int w, int h)
-{
-    double x_weight = 0.0;
-    double y_weight = 0.0;
-    double window[3][3] =
-    {
-        { px(pixels, x - 1, y - 1, w, h), px(pixels, x, y - 1, w, h),  px(pixels, x + 1, y - 1, w, h) },
-        { px(pixels, x - 1, y    , w, h), px(pixels, x, y    , w, h),  px(pixels, x + 1, y    , w, h) },
-        { px(pixels, x - 1, y + 1, w, h), px(pixels, x, y + 1, w, h),  px(pixels, x + 1, y + 1, w, h) }
-    };
-
-    for (int i = 0; i < 3; i++)
-    {
-        for (int j = 0; j < 3; j++)
-        {
-            x_weight += window[i][j] * sobel_filter_x[i][j];
-            y_weight += window[i][j] * sobel_filter_y[i][j];
-        }
-    }
-
-    return ceil(sqrt(x_weight * x_weight + y_weight * y_weight)) * 2.0;
-}
-
-void sobel_filter(byte* output, byte* input, int w, int h)
-{
-    int x = 0, y = 0;
-
-    for (int i = 0; i < h*w; i++, x++)
-    {
-        if (!(x < w))
-        {
-            x = 0;
-            y++;
-        }
-
-        int value = (int)sobel_op(input, x, y, w, h);
-
-        if (value <= 50)
-        {
-            value = 0;
-        }
-        else
-        {
-            value *= 3;
-        }
-
-        int clamped = clamp(0, 255, int(value));
-        output[i] = clamped == 0 ? 0 : 255;
-    }
 }
 
 int main(unsigned long long speID, unsigned long long argp, unsigned long long envp)
@@ -110,7 +62,53 @@ int main(unsigned long long speID, unsigned long long argp, unsigned long long e
     byte input[bufferSize], output[bufferSize];    
     read(bufferSize, chunkSize, input, task.output + bufferStart, tagID);
 
-    sobel_filter(output, input, workRegionWidth, workRegionHeight);
+    int x = 0, y = 0;
+
+    for (int i = 0, dim = workRegionHeight*workRegionWidth; i < dim; ++i, ++x)
+    {
+        if (x >= workRegionWidth)
+        {
+            x = 0;
+            y++;
+        }
+
+        float x_weight = 0.0;
+        float y_weight = 0.0;
+        float window[3][3] =
+        {
+            { px(input, x - 1, y - 1, workRegionWidth, workRegionHeight), px(input, x, y - 1, workRegionWidth, workRegionHeight),  px(input, x + 1, y - 1, workRegionWidth, workRegionHeight) },
+            { px(input, x - 1, y    , workRegionWidth, workRegionHeight), px(input, x, y    , workRegionWidth, workRegionHeight),  px(input, x + 1, y    , workRegionWidth, workRegionHeight) },
+            { px(input, x - 1, y + 1, workRegionWidth, workRegionHeight), px(input, x, y + 1, workRegionWidth, workRegionHeight),  px(input, x + 1, y + 1, workRegionWidth, workRegionHeight) }
+        };
+
+        for (int j = 0; j < 3; ++j)
+        {
+            __vector float vec_w = { window[j][0], window[j][1], window[j][2], 0.0f };
+            __vector float vec_x = { sobel_filter_x[j][0], sobel_filter_x[j][1], sobel_filter_x[j][2], 0.0f };
+            __vector float vec_y = { sobel_filter_y[j][0], sobel_filter_y[j][1], sobel_filter_y[j][2], 0.0f };
+
+            __vector float vec_x_weight = spu_mul(vec_w, vec_x);
+            __vector float vec_y_weight = spu_mul(vec_w, vec_y);
+
+            x_weight += vec_x_weight[0] + vec_x_weight[1] + vec_x_weight[2];
+            y_weight += vec_y_weight[0] + vec_y_weight[1] + vec_y_weight[2];
+        }
+
+        int value = (int)(ceil(sqrt(x_weight * x_weight + y_weight * y_weight)) * 2.0f);
+
+        if (value <= 50)
+        {
+            value = 0;
+        }
+        else
+        {
+            value *= 3;
+        }
+
+        int clamped = clamp(0, 255, int(value));
+        output[i] = clamped == 0 ? 0 : 255;
+    }
+
     write(bufferSize, chunkSize, output, task.output + bufferStart, tagID);    
     return 0;
 }

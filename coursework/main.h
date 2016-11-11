@@ -5,8 +5,8 @@
 #include <math.h>
 
 // If you want to benchmark PPU + SPU's uncomment
-//#define BENCHMARK_PPU
-//#define BENCHMARK_SPU
+#define BENCHMARK_PPU
+#define BENCHMARK_SPU
 
 // size: 8 bytes
 template<typename T>
@@ -46,11 +46,14 @@ struct image_task
 
 typedef unsigned char byte;
 
+#define clamp(min, max, v) ((v) < (min)) ? (min) : (((v) > (max)) ? (max) : (v));
+
+/*
 template<typename T>
 T clamp(T min, T max, T v)
 {
     return std::max(min, std::min(v, max));
 }
-
+*/
 #endif
 
