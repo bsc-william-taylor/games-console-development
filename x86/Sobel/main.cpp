@@ -1,9 +1,3 @@
-#define _USE_MATH_DEFINES
-
-#include "FreeImage.h"
-
-#pragma comment(lib, "freeimage.lib")
-
 #include <algorithm>
 #include <functional>
 #include <iostream>
@@ -12,15 +6,26 @@
 #include <math.h>
 #include <ctime>
 
+
+#define STB_IMAGE_WRITE_IMPLEMENTATION
+#define STB_IMAGE_IMPLEMENTATION
+#include "../../common/stb_image_write.h"
+#include "../../common/stb_image.h"
+
 using byte = unsigned char;
 
-void timeit(std::function<void()> operation) 
+enum class measure_in
 {
-    auto start = clock();
-    operation();
-    auto ms = (clock() - start) / static_cast<double>(CLOCKS_PER_SEC / 1000);
-    std::cout << "Finished in " << ms << "ms" << std::endl;
-    std::cin.get();
+    secs = 1000000,
+    ms = 1000
+};
+
+template<measure_in measure, typename Functor, typename... Args>
+double benchmark(Functor&& method, Args&&... args)
+{
+    clock_t start = clock();
+    method(std::forward<Args>(args)...);
+    return (clock() - start) / (CLOCKS_PER_SEC  / double(measure));
 }
 
 const double sobel_filter_y[3][3] =
@@ -50,11 +55,7 @@ double px(byte* pixels, int x, int y, int w, int h)
     if (x >= w || y >= h)
         return px(pixels, std::min(x, w - 1), std::min(y, h - 1), w, h);
 
-    auto index = (x + w * y) * 3;
-    auto r = static_cast<int>(pixels[index + 0]);
-    auto g = static_cast<int>(pixels[index + 1]);
-    auto b = static_cast<int>(pixels[index + 2]);
-    return (r + g + b) / 3.0;
+    return pixels[x + w * y];
 }
 
 double sobel_op(byte* pixels, int x, int y, int w, int h)
@@ -81,17 +82,11 @@ double sobel_op(byte* pixels, int x, int y, int w, int h)
     return ceil(sqrt(x_weight * x_weight + y_weight * y_weight)) * 2.0;
 }
 
-void sobel_filter(FIBITMAP * image)
+void sobel_filter(byte * input, byte* output, int w, int h)
 {
-    auto clone = FreeImage_Clone(image);
-    auto output = FreeImage_GetBits(image);
-    auto input = FreeImage_GetBits(clone);
-    auto comp = FreeImage_GetBPP(image) / 8;
-    auto h = FreeImage_GetHeight(image);
-    auto w = FreeImage_GetWidth(image);
     auto x = 0, y = 0;
 
-    for (auto i = 0u; i < h*w * 3; i += comp, x++)
+    for (auto i = 0u; i < h*w; i++, x++)
     {
         if (!(x < w))
         {
@@ -102,17 +97,17 @@ void sobel_filter(FIBITMAP * image)
         auto value = sobel_op(input, x, y, w, h);
 
         if (value <= 50)
+        {
             value = 0;
+        }    
         else
+        {
             value *= 3.0;
+        }
 
         auto clamped = clamp(0, 255, int(value));
-        output[i + 0] = clamped == 0 ? 0 : 0;
-        output[i + 1] = clamped == 0 ? 0 : 0;
-        output[i + 2] = clamped == 0 ? 0 : 255;
+        output[i] = clamped == 0 ? 0 : 255;
     }
-
-    FreeImage_Unload(clone);
 }
 
 template<typename T, int radius>
@@ -120,7 +115,7 @@ std::vector<T>  gaussian_kernel()
 {
     std::vector<T> kernel(radius * 2 + 1);
 
-    const T sqrtTwoPiTimesRadiusRecip = 1.0 / (sqrt(2.0 * M_PI) * radius);
+    const T sqrtTwoPiTimesRadiusRecip = 1.0 / (sqrt(2.0 * 3.14159) * radius);
     const T twoRadiusSquaredRecip = 1.0 / (2.0 * radius * radius);
 
     T sum = (T)0.0;
@@ -144,15 +139,10 @@ std::vector<T>  gaussian_kernel()
 }
 
 template<int R>
-void gaussian_blur(FIBITMAP* input, FIBITMAP* output)
+void gaussian_blur(byte* inBytes, byte* outBytes, int w, int h)
 {
-    int h = FreeImage_GetHeight(input);
-    int w = FreeImage_GetWidth(input);
-
-    auto tempBytes = static_cast<unsigned char*>(malloc(h*w * 3));
+    auto tempBytes = static_cast<unsigned char*>(malloc(h*w));
     auto kernel = gaussian_kernel<double, R>();
-    auto outBytes = FreeImage_GetBits(output);
-    auto inBytes = FreeImage_GetBits(input);
 
     for (auto y = 0; y < h; y++)
     {
@@ -164,14 +154,10 @@ void gaussian_blur(FIBITMAP* input, FIBITMAP* output)
             for (auto k = 0; k < kernelSize; k++)
             {
                 auto px = clamp(0, w - 1, x - R + k);
-                auto index = px * 3 + w * y * 3;
-                total += kernel[k] * inBytes[index];
+                total += kernel[k] * inBytes[px + w * y];
             }
 
-            auto index = x * 3 + w * y * 3;
-            tempBytes[index + 0] = total;
-            tempBytes[index + 1] = total;
-            tempBytes[index + 2] = total;
+            tempBytes[x + w * y] = total;
         }
     }
 
@@ -185,40 +171,27 @@ void gaussian_blur(FIBITMAP* input, FIBITMAP* output)
             for (auto k = 0; k < kernelSize; k++)
             {
                 auto py = clamp(0, h - 1, y - R + k);
-                auto index = py * w * 3 + x * 3;
-                total += kernel[k] * tempBytes[index];
+                total += kernel[k] * tempBytes[py * w + x];
             }
 
-            auto index = x * 3 + w*y * 3;
-            outBytes[index + 0] = total;
-            outBytes[index + 1] = total;
-            outBytes[index + 2] = total;
+            outBytes[x + w * y] = total;
         }
     }
 
     free(tempBytes);
 }
 
-void overlay_squares(FIBITMAP * image, FIBITMAP * overlay)
+void overlay_squares(byte * inBytes, byte* outBytes, int width, int height)
 {
-    auto outBytes = FreeImage_GetBits(overlay);
-    auto inBytes = FreeImage_GetBits(image);
-    auto height = FreeImage_GetHeight(image);
-    auto width = FreeImage_GetWidth(image);
-
-    for (auto i = 0; i < width*height * 3; i += 3)
+    for (auto i = 0; i < width*height; i++)
     {
-        if (outBytes[i + 1] == 255)
+        if (outBytes[i] == 255)
         {
-            outBytes[i + 0] = inBytes[i + 0];
-            outBytes[i + 1] = inBytes[i + 1];
-            outBytes[i + 2] = inBytes[i + 2];
+            outBytes[i] = inBytes[i];
         }
         else
         {
-            outBytes[i + 0] = inBytes[i + 0] * 0.4;
-            outBytes[i + 1] = inBytes[i + 1] * 0.4;
-            outBytes[i + 2] = inBytes[i + 2] * 0.4;
+            outBytes[i] = inBytes[i] * 0.5;
         }
     }
 }
@@ -231,42 +204,35 @@ double edge_density(unsigned char * bytes, int x, int y, int w, int h)
     {
         for (auto px = x; px < w; px++)
         {
-            auto index = px * 3 + 640 * py * 3;
-            totalDensity += bytes[index + 2];
+            totalDensity += bytes[px + 640 * py];
         }
     }
 
     return totalDensity / ((w - x) * (h - y)*255.0);
 }
 
-void fill(unsigned char * bytes, int x, int y, int w, int h, int r, int g, int b)
+void fill(unsigned char * bytes, int x, int y, int w, int h, int c)
 {
     for (auto py = y; py < h; py++)
     {
         for (auto px = x; px < w; px++)
         {
-            auto index = px * 3 + 640 * py * 3;
-            bytes[index + 0] = b;
-            bytes[index + 1] = g;
-            bytes[index + 2] = r;
+            bytes[px + 640 * py] = c;
         }
     }
 }
 
-void detect_windows(FIBITMAP * image, int width, int height, int step)
+void detect_windows(byte* input, byte* output, int width, int height, int step)
 {
-    auto clone = FreeImage_Clone(image);
-    auto cloneBytes = FreeImage_GetBits(clone);
-    auto bytes = FreeImage_GetBits(image);
     auto x = 0, y = 0;
 
     while (y < 480 && x < 640)
     {
-        auto edgeDensity = edge_density(cloneBytes, x, y, std::min(x + width, 640), std::min(y + height, 480));
+        auto edgeDensity = edge_density(input, x, y, std::min(x + width, 640), std::min(y + height, 480));
 
         if (edgeDensity >= 0.3)
         {
-            fill(bytes, x, y, std::min(x + width, 640), std::min(y + height, 480), 0, 255, 0);
+            fill(output, x, y, std::min(x + width, 640), std::min(y + height, 480), 255);
         }
 
         x += step;
@@ -277,36 +243,51 @@ void detect_windows(FIBITMAP * image, int width, int height, int step)
             x = 0;
         }
     }
-
-    FreeImage_Unload(clone);
 }
 
 void detect_regions()
 {
-    FreeImage_Initialise();
+    byte* outputBuffer1 = nullptr;
+    byte* outputBuffer2 = nullptr;
+    byte* outputImage = nullptr;
 
     for (auto i = 1; i <= 10; i++)
     {
-        auto in = "./inputs/" + std::to_string(i) + ".bmp";
-        auto out = "./outputs/" + std::to_string(i) + "-out.bmp";
-        auto bitmap = FreeImage_Load(FIF_BMP, in.c_str());
-        auto mask = FreeImage_Clone(bitmap);
+        auto in = "./assets/" + std::to_string(i) + ".bmp";
+        auto out = "./assets/" + std::to_string(i) + "-out.bmp";
 
-        gaussian_blur<6>(bitmap, mask);
-        sobel_filter(mask);
-        detect_windows(mask, 45, 45, 12);
-        overlay_squares(bitmap, mask);
+        auto w = 0, h = 0, n = 0;
+        auto bitmap = stbi_load(in.c_str(), &w, &h, &n, 1);
+        auto outputSize = w*h*n;
 
-        FreeImage_Save(FIF_BMP, mask, out.c_str());
-        FreeImage_Unload(mask);
-        FreeImage_Unload(bitmap);
+        outputImage = outputImage != nullptr ? outputImage : static_cast<byte*>(malloc(outputSize));
+        outputBuffer1 = outputBuffer1 != nullptr ? outputBuffer1 : static_cast<byte*>(malloc(w*h));
+        outputBuffer2 = outputBuffer2 != nullptr ? outputBuffer2 : static_cast<byte*>(malloc(w*h));
+
+        gaussian_blur<6>(bitmap, outputBuffer1, w, h);
+        sobel_filter(outputBuffer1, outputBuffer2, w, h);
+        detect_windows(outputBuffer2, outputBuffer1, 45, 45, 12);
+        overlay_squares(bitmap, outputBuffer1, w, h);
+
+        for(auto y = 0, x = 0; y < outputSize; y+=3, x++)
+        {
+            outputImage[y+0] = outputBuffer1[x];
+            outputImage[y+1] = outputBuffer1[x];
+            outputImage[y+2] = outputBuffer1[x];
+        }
+
+        stbi_write_bmp(out.c_str(), w, h, 3, outputImage);
+        stbi_image_free(bitmap);
     }
 
-    FreeImage_DeInitialise();
+    free(outputBuffer1);
+    free(outputBuffer2);
+    free(outputImage);
 }
 
 int main(int argc, char * argv[])
 {
-    timeit(detect_regions);
-    return 0;
+    auto ms = benchmark<measure_in::ms>(detect_regions);
+    std::cout << "benchmark: " << ms << "ms " << std::endl;
+    return std::cin.get();
 }
