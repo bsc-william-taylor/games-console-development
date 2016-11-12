@@ -29,7 +29,7 @@ if len(sys.argv) > 1:
             build_spu = True
         if arg == "-ppu":
             build_ppu = True   
-        if arg == "-r":
+        if arg == "-o" or arg == "-r":
             optimisations = True 
 
 if build_ppu:

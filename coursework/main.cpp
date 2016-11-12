@@ -3,6 +3,8 @@
 #include <vector>
 #include <string>
 
+#define BENCHMARK_PPU
+
 #include "../common/ppu_benchmark.h"
 #include "../common/spu_manager.h"
 #include "../common/image.h"
@@ -34,7 +36,7 @@ void process_image(spu_manager& spu_manager, basic_image& image, int index)
   unsigned char original[imageSize];
   unsigned char output[imageSize];
 
-  for(int i = 0; i < imageSize; i++)
+  for(int i = 0; i < imageSize; ++i)
   {
     original[i] = image.data[i];
   }
@@ -61,40 +63,36 @@ void process_image(spu_manager& spu_manager, basic_image& image, int index)
   write_output(filename("./O", index+1, ".bmp"), output, image.width, image.height);
 }
 
-#define array_count(arr) (sizeof(arr) / sizeof((arr)[0]))
-
 int main(int argc, char * argv[])
 {
-    for(int _i = 0; _i < 1; ++_i)
+    ppu_benchmark track("COURSEWORK");
+    spu_manager spu_manager(false);
+
+    const int number_of_files = 10;
+    basic_image images[number_of_files];
+    char *filenames[number_of_files] = 
     {
-        ppu_benchmark track("COURSEWORK");
-        spu_manager spu_manager(true);
+      "../assets/1.bmp",
+      "../assets/2.bmp",
+      "../assets/3.bmp",
+      "../assets/4.bmp",
+      "../assets/5.bmp",
+      "../assets/6.bmp",
+      "../assets/7.bmp",
+      "../assets/8.bmp",
+      "../assets/9.bmp",
+      "../assets/10.bmp"
+    };  
 
-        char *filenames[10] = {"../assets/1.bmp",
-                               "../assets/2.bmp",
-                               "../assets/3.bmp",
-                               "../assets/4.bmp",
-                               "../assets/5.bmp",
-                               "../assets/6.bmp",
-                               "../assets/7.bmp",
-                               "../assets/8.bmp",
-                               "../assets/9.bmp",
-                               "../assets/10.bmp"};
-        int number_of_files = array_count(filenames);
+    load_images(filenames, number_of_files, images);
 
-        //std::vector<basic_image> images;
-        basic_image images[10];
-  
-        load_images(filenames, number_of_files, images);
+    LOG("%s %d %s", "Loaded & Processing", IMAGES, "images");
 
-        LOG("%s %d %s", "Loaded & Processing", IMAGES, "images");
-
-        for(int i = 0; i < number_of_files; ++i)
-        { 
-            process_image(spu_manager, images[i], i);
-        }
-
-        unload_images(images, number_of_files);
+    for(int i = 0; i < number_of_files; ++i)
+    { 
+        process_image(spu_manager, images[i], i);
     }
+
+    unload_images(images, number_of_files);
     return 0;
 }

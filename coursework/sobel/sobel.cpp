@@ -26,7 +26,6 @@ const float sobel_filter_x[3][3] =
     { 1.5,  0,  -1.5 }
 };
 
-// Replacing std::min and std::max saved about 5 ms.
 #define max(a, b) (((a) > (b)) ? (a) : (b))
 #define min(a, b) (((a) < (b)) ? (a) : (b))
 

@@ -22,10 +22,10 @@ public:
 
 	~ppu_benchmark() 
 	{
-		//#ifdef BENCHMARK_PPU
+		#ifdef BENCHMARK_PPU
 		double ms =(__mftb() - start) / TICKS_PER_MS;
 		printf("\n%s: %.0fms \n", uniqueName.c_str(), ms); 
-		//#endif
+		#endif
 	}
 };
 

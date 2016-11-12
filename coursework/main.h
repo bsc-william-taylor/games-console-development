@@ -4,10 +4,6 @@
 
 #include <math.h>
 
-// If you want to benchmark PPU + SPU's uncomment
-#define BENCHMARK_PPU
-#define BENCHMARK_SPU
-
 // size: 8 bytes
 template<typename T>
 struct point
