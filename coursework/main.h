@@ -46,14 +46,7 @@ struct image_task
 
 typedef unsigned char byte;
 
-#define clamp(min, max, v) ((v) < (min)) ? (min) : (((v) > (max)) ? (max) : (v));
+#define clamp(min, max, v) ((v) < (min)) ? (min) : (((v) > (max)) ? (max) : (v))
 
-/*
-template<typename T>
-T clamp(T min, T max, T v)
-{
-    return std::max(min, std::min(v, max));
-}
-*/
 #endif
 

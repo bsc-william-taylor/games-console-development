@@ -63,15 +63,28 @@ int main(unsigned long long speID, unsigned long long argp, unsigned long long e
         for(int x = 0; x < workRegionWidth; x++)
         {
             int kernelSize = size;
-            float total = 0.0;
 
-            for (int k = 0; k < kernelSize; k++)
+            __vector float vec_total;
+            memset(&vec_total, 0, sizeof(vec_total));
+
+            for (int k = 0; k < kernelSize; k += 4)
             {
-                int px = clamp(0, workRegionWidth - 1, x - blurMag + k);
-                total += kernel[k] * input[px+workRegionWidth*y];
+                __vector float vec_input = { (float)input[(clamp(0, workRegionWidth - 1, x - blurMag + k    )) + workRegionWidth * y],
+                                             (float)input[(clamp(0, workRegionWidth - 1, x - blurMag + k + 1)) + workRegionWidth * y],
+                                             (float)input[(clamp(0, workRegionWidth - 1, x - blurMag + k + 2)) + workRegionWidth * y],
+                                             (float)input[(clamp(0, workRegionWidth - 1, x - blurMag + k + 3)) + workRegionWidth * y] };
+
+                __vector float vec_kernel = { kernel[k    ],
+                                              kernel[k + 1],
+                                              kernel[k + 2],
+                                              kernel[k + 3] };
+
+                vec_total = spu_add(vec_total, spu_mul(vec_kernel, vec_input));
             }
 
-            tempBytes[x+workRegionWidth*y] = (byte)total;
+            float total = vec_total[0] + vec_total[1] + vec_total[2] + vec_total[3];
+
+            tempBytes[x + workRegionWidth * y] = (byte)total;
         }
     }
 
@@ -80,15 +93,28 @@ int main(unsigned long long speID, unsigned long long argp, unsigned long long e
         for (int x = 0; x < workRegionWidth; x++)
         {
             int kernelSize = size;
-            float total = 0.0;
 
-            for(int k = 0; k < kernelSize; k++)
+            __vector float vec_total;
+            memset(&vec_total, 0, sizeof(vec_total));
+
+            for(int k = 0; k < kernelSize; k += 4)
             {
-                int py = clamp(0, workRegionHeight - 1, y - blurMag + k);
-                total += kernel[k] * tempBytes[py*workRegionWidth+x];
-            }
+                __vector float vec_tempBytes = { (float)tempBytes[(clamp(0, workRegionHeight - 1, y - blurMag + k    )) * workRegionWidth + x],
+                                                 (float)tempBytes[(clamp(0, workRegionHeight - 1, y - blurMag + k + 1)) * workRegionWidth + x],
+                                                 (float)tempBytes[(clamp(0, workRegionHeight - 1, y - blurMag + k + 2)) * workRegionWidth + x],
+                                                 (float)tempBytes[(clamp(0, workRegionHeight - 1, y - blurMag + k + 3)) * workRegionWidth + x] };
 
-            output[x+workRegionWidth*y] = (byte)total;
+                __vector float vec_kernel = { kernel[k    ],
+                                              kernel[k + 1],
+                                              kernel[k + 2],
+                                              kernel[k + 3] };
+
+                vec_total = spu_add(vec_total, spu_mul(vec_kernel, vec_tempBytes));
+            }
+            
+            float total = vec_total[0] + vec_total[1] + vec_total[2] + vec_total[3];
+
+            output[x + workRegionWidth * y] = (byte)total;
         }
     }
     
