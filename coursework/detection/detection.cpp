@@ -7,7 +7,7 @@
 #include "../main.h"
 #include "../mfc.h"
 
-const int chunkSize = 15360;
+const int chunkSize = 16384;
 const int outColour = 255;
 const int tagID = 1;
 

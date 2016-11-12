@@ -9,7 +9,7 @@
 
 const int workRegionHeight = 80;
 const int workRegionWidth = 640;
-const int chunkSize = 15360;
+const int chunkSize = 16384;
 const int blurMag = 6;
 const int tagID = 3;
 
