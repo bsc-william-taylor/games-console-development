@@ -4,6 +4,7 @@
 #include <algorithm>
 
 #include "../../common/spu_benchmark.h"
+#include "../../common/visual_tunning.h"
 #include "../main.h"
 #include "../mfc.h"
 
@@ -95,7 +96,7 @@ int main(unsigned long long speID, unsigned long long argp, unsigned long long e
 
         int value = (int)(ceil(sqrt(x_weight * x_weight + y_weight * y_weight)) * 2.0f);
 
-        if (value <= 50)
+        if (value <= ACCEPTED_VALUE_FOR_EDGE)
         {
             value = 0;
         }

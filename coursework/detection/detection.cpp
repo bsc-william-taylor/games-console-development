@@ -4,6 +4,7 @@
 #include <algorithm>
 
 #include "../../common/spu_benchmark.h"
+#include "../../common/visual_tunning.h"
 #include "../main.h"
 #include "../mfc.h"
 
@@ -11,14 +12,8 @@ const int chunkSize = 16384;
 const int outColour = 255;
 const int tagID = 1;
 
-const float edgeTolerance = 0.3;
-
 const int workRegionWidth = 640;
 const int workRegionHeight = 80;
-
-const int windowWidth = 45;
-const int windowHeight = 45;
-const int windowStep = 12;
 
 const int halfRegionExpansion = 20;
 const int regionExpansion = 40;
@@ -62,7 +57,7 @@ void detect_windows(byte* output, byte* input, int width, int height, int step, 
     {
         float edgeDensity = edge_density(input, x, y, min(x + width, w), min(y + height, h));
 
-        if (edgeDensity >= edgeTolerance)
+        if (edgeDensity >= IGNORABLE_EDGE_DENSITY)
         {
             fill(output, x, y, min(x + width, w), min(y + height, h), outColour);
         }
@@ -103,7 +98,7 @@ int main(unsigned long long speID, unsigned long long argp, unsigned long long e
     byte input[bufferSize], output[bufferSize];    
     read(bufferSize, chunkSize, input, address, tagID);
 
-    detect_windows(output, input, windowWidth, windowHeight, windowStep, padding);
+    detect_windows(output, input, REGION_LENGTH, REGION_LENGTH, PIXELS_PER_STEP, padding);
 
     write(bufferSize, chunkSize, output, address, tagID);    
     return 0;
