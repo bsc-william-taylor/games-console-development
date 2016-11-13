@@ -11,6 +11,7 @@
 #define STB_IMAGE_IMPLEMENTATION
 #include "../../common/stb_image_write.h"
 #include "../../common/stb_image.h"
+#include "../../common/visual_tunning.h"
 
 using byte = unsigned char;
 
@@ -96,7 +97,7 @@ void sobel_filter(byte * input, byte* output, int w, int h)
 
         auto value = sobel_op(input, x, y, w, h);
 
-        if (value <= 50)
+        if (value <= ACCEPTED_VALUE_FOR_EDGE)
         {
             value = 0;
         }    
@@ -230,7 +231,7 @@ void detect_windows(byte* input, byte* output, int width, int height, int step)
     {
         auto edgeDensity = edge_density(input, x, y, std::min(x + width, 640), std::min(y + height, 480));
 
-        if (edgeDensity >= 0.3)
+        if (edgeDensity >= IGNORABLE_EDGE_DENSITY)
         {
             fill(output, x, y, std::min(x + width, 640), std::min(y + height, 480), 255);
         }
@@ -266,7 +267,7 @@ void detect_regions()
 
         gaussian_blur<6>(bitmap, outputBuffer1, w, h);
         sobel_filter(outputBuffer1, outputBuffer2, w, h);
-        detect_windows(outputBuffer2, outputBuffer1, 45, 45, 12);
+        detect_windows(outputBuffer2, outputBuffer1, REGION_LENGTH, REGION_LENGTH, PIXELS_PER_STEP);
         overlay_squares(bitmap, outputBuffer1, w, h);
 
         for(auto y = 0, x = 0; y < outputSize; y+=3, x++)
