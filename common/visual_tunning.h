@@ -9,5 +9,4 @@
 #define REGION_HEIGHT 45
 #define REGION_WIDTH 45
 
-
 #endif // !__VISUAL_TUNNING__
