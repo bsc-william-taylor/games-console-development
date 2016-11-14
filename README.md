@@ -1,5 +1,27 @@
-# Cell Experiments
-A variety of programs which run on a PS3 cell processor. All were written as part of the Games Console Development module at UWS.
 
+# Cell Coursework
 
-# TODOS
+This repository contains the code for the Computer Games Console module. Where we had to build a PS3 program which detected regions of interest inside an image.
+
+# How to build
+
+To build the application copy the following directories to the PS3
+
+* ./assets
+* ./common
+* ./coursework
+
+After you have do this cd into the coursework directory and use the following commands.
+
+```shell
+# Deals with any windows -> linux character encoding problems
+dos2unix build.py
+# Makes the python script runnable without the python command
+chmod +x build.py
+# Start the build progress.
+./build.py -ppu -spu -o
+```
+
+* -ppu = Build the ppu program
+* -spu = Build the spu program
+* -o   = Build with optimisations.
