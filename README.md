@@ -25,3 +25,5 @@ chmod +x build.py
 * -ppu = Build the ppu program
 * -spu = Build the spu program
 * -o   = Build with optimisations.
+
+After the program has run you can find the output of the images located right next to the executable.
