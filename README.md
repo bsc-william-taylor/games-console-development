@@ -20,6 +20,8 @@ dos2unix build.py
 chmod +x build.py
 # Start the build progress.
 ./build.py -ppu -spu -o
+# Run the app
+./app
 ```
 
 * -ppu = Build the ppu program
