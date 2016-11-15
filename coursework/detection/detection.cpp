@@ -61,7 +61,7 @@ void detect_windows(byte* output, byte* input, int width, int height, int step, 
         {
             fill(output, x, y, min(x + width, w), min(y + height, h), outColour);
         }
-        
+
         x += step;
 
         if (x >= w)
@@ -77,11 +77,11 @@ int main(unsigned long long speID, unsigned long long argp, unsigned long long e
     const int uniqueID = spu_read_in_mbox();
     spu_benchmark track("detection", uniqueID+1);
     image_task task __attribute__((aligned(16)));
-    
+
     mfc_write_tag_mask(1<<tagID);
     mfc_get((void*)&task, argp, envp, tagID, 0, 0);
     mfc_read_tag_status_any();
-    
+
     unsigned long long totalBytes = task.size.w * task.size.h;
     unsigned long long bufferSize = totalBytes / task.sections;
     unsigned long long bufferStart = bufferSize * uniqueID;
@@ -94,12 +94,12 @@ int main(unsigned long long speID, unsigned long long argp, unsigned long long e
         address -= workRegionWidth * halfRegionExpansion;
         padding = regionExpansion;
     }
-   
-    byte input[bufferSize], output[bufferSize];    
+
+    byte input[bufferSize], output[bufferSize];
     read(bufferSize, chunkSize, input, address, tagID);
 
     detect_windows(output, input, REGION_LENGTH, REGION_LENGTH, PIXELS_PER_STEP, padding);
 
-    write(bufferSize, chunkSize, output, address, tagID);    
+    write(bufferSize, chunkSize, output, address, tagID);
     return 0;
 }

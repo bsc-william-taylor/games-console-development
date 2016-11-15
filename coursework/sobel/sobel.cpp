@@ -50,16 +50,16 @@ int main(unsigned long long speID, unsigned long long argp, unsigned long long e
     const int uniqueID = spu_read_in_mbox();
     spu_benchmark track("sobel", uniqueID+1);
     image_task task __attribute__((aligned(16)));
-    
+
     mfc_write_tag_mask(1<<tagID);
     mfc_get((void*)&task, argp, envp, tagID, 0, 0);
     mfc_read_tag_status_any();
-    
+
     unsigned long long totalBytes = task.size.w * task.size.h;
     unsigned long long bufferSize = totalBytes / task.sections;
     unsigned long long bufferStart = bufferSize * uniqueID;
 
-    byte input[bufferSize], output[bufferSize];    
+    byte input[bufferSize], output[bufferSize];
     read(bufferSize, chunkSize, input, task.output + bufferStart, tagID);
 
     int x = 0, y = 0;
@@ -109,6 +109,6 @@ int main(unsigned long long speID, unsigned long long argp, unsigned long long e
         output[i] = clamped == 0 ? 0 : 255;
     }
 
-    write(bufferSize, chunkSize, output, task.output + bufferStart, tagID);    
+    write(bufferSize, chunkSize, output, task.output + bufferStart, tagID);
     return 0;
 }

@@ -14,21 +14,21 @@ inline void write(int bufferSize, int chunkSize, unsigned char* output, unsigned
     while(bytesWritten < bufferSize)
     {
         int size = chunkSize;
-        
+
         if(bytesWritten + size >= bufferSize)
         {
             size = bufferSize - bytesWritten;
         }
-        
+
         unsigned char buffer[size];
         for(int i = 0; i < size; i++)
         {
             buffer[i] = output[++index];
         }
-        
+
         mfc_put(buffer, writeAt, size, tagID, 0, 0);
         mfc_read_tag_status_all();
-        
+
         bytesWritten += size;
         writeAt += size;
     }
@@ -42,21 +42,21 @@ inline void read(int bufferSize, int chunkSize, unsigned char* input, unsigned l
     while(bytesRead < bufferSize)
     {
         int size = chunkSize;
-        
+
         if(bytesRead + size >= bufferSize)
         {
             size = bufferSize - bytesRead;
         }
-        
+
         unsigned char buffer[size];
         mfc_get(buffer, readAt, size, tagID, 0, 0);
         mfc_read_tag_status_any();
-        
+
         for(int i =  0; i < size; i++)
         {
             input[++index] = buffer[i];
         }
-        
+
         bytesRead += size;
         readAt += size;
     }
