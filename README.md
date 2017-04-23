@@ -1,5 +1,5 @@
 
-<img src='assets/1.bmp' />
+<img src='preview.png' />
 
 <img src='icon.png' width='150' height='150' align='right' />
 
