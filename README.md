@@ -1,9 +1,17 @@
 
-# Cell Coursework
+<img src='assets/1.bmp' />
+
+<img src='icon.png' width='150' height='150' align='right' />
+
+# Games Console Development
 
 This repository contains the code for the Computer Games Console module. Where we had to build a PS3 program which detected regions of interest inside an image.
+ 
+## Assignment
 
-# How to build
+Requirements
+
+## Submission
 
 To build the application copy the following directories to the PS3
 
@@ -29,3 +37,7 @@ chmod +x build.py
 * -o   = Build with optimisations.
 
 After the program has run you can find the output of the images located right next to the executable.
+
+## License
+
+Apache 2.0
