@@ -6,9 +6,9 @@
 #include <math.h>
 #include <ctime>
 
-
 #define STB_IMAGE_WRITE_IMPLEMENTATION
 #define STB_IMAGE_IMPLEMENTATION
+
 #include "../../common/stb_image_write.h"
 #include "../../common/stb_image.h"
 #include "../../common/visual_tunning.h"

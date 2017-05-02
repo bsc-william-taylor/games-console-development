@@ -34,7 +34,6 @@ public:
     void spe_arg(void* address, int size);
     void spe_program(const std::string& filename);
     void spe_run(int count);
-
     void info();
 };
 
