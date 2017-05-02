@@ -3,13 +3,13 @@
 *.lo
 *.o
 *.obj
+*.db
+*.opendb
 
 # Folders
-./x86/.vs
-./x86/Sobel/Release
-./x86/Sobel/Debug
-./x86/Release
-./x86/Debug
+.vs
+Release
+Debug
 
 # Precompiled Headers
 *.gch
