@@ -5,16 +5,16 @@
 
 # Games Console Development
 
-The Games Console Development module taught students how to programming the PS3 game console. This module was assessed with both an exam and a practical coursework. The key and interesting part of this module was programming the PS3 as it has a very unique architecture and development environment. This meant returning back to the basics where no IDE was to be found and programs written had to be built from hand calling cli based programs such as Sony's custom GCC compilers as the only way to access the PS3s at the university was by SSH'ing into them. 
+The Games Console Development module taught students how to program the PS3 games console. This module was assessed with both an exam and a practical coursework. The key and interesting part of this module was programming the PS3 as it has a very unique architecture and development environment. This meant returning back to the basics where no IDE was to be found and programs written had to be built by hand calling cli based programs such as Sony's custom GCC compilers as the only way to access the PS3s at the university was by SSH'ing into them. 
  
 ## Assignment
 
-The assignment was rather complex. We were given a set of PPM files which contained cells in them. We had to write a program that highlighted these cells in the image. We were not allowed to use computer vision libraries and instead had to come up with solutions our self. It was recommended that we wrote an initial implementation on a Windows PC before converting it to run on the PS3. Getting it running on the PS3 was not enough of course, to get extra marks students had to any number of the below requirements. 
+The assignment was rather complex. We were given a set of TIF image files which contained cells in them. We had to write a program that highlighted these cells which were labelled as regions of interest in the image. We were not allowed to use computer vision libraries and instead had to implement the solution from scratch. It was recommended that we wrote an initial implementation on a Windows PC before converting it to run on the PS3. Getting it running on the PS3 was not enough of course, to get extra marks students had to follow any number of the below requirements. 
 
 **Requirements**
 
 * Use SIMD intrinsics, Multicore decomposition, SPU intercommunication as well as algorithmic optimisation where possible
-*  You application components should be developed and tested in phases i.e. Get a C++ version of important ideas working before parallelisation or any other optimisation
+*  Application components should be developed and tested in phases i.e. Get a C++ version of important ideas working before parallelisation or any other optimisation
 *  Each component should be properly tested; with the testing approach and the outcome of testing recorded.
 * Decisions about eﬃcient use of SPU local memory management will have to be made consistent with the capabilities of DMA access.
 * You are required to provide an appropriate visual representation of the ﬁnal output from your application.
