@@ -72,16 +72,16 @@ int main(int argc, char * argv[])
     basic_image images[number_of_files];
     char *filenames[number_of_files] =
     {
-        "../assets/1.bmp",
-        "../assets/2.bmp",
-        "../assets/3.bmp",
-        "../assets/4.bmp",
-        "../assets/5.bmp",
-        "../assets/6.bmp",
-        "../assets/7.bmp",
-        "../assets/8.bmp",
-        "../assets/9.bmp",
-        "../assets/10.bmp"
+        "../../assets/1.bmp",
+        "../../assets/2.bmp",
+        "../../assets/3.bmp",
+        "../../assets/4.bmp",
+        "../../assets/5.bmp",
+        "../../assets/6.bmp",
+        "../../assets/7.bmp",
+        "../../assets/8.bmp",
+        "../../assets/9.bmp",
+        "../../assets/10.bmp"
     };
 
     load_images(filenames, number_of_files, images);
